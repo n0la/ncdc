@@ -1,13 +1,15 @@
-#include <ncdc/account.h>
-#include <ncdc/refable.h>
+#include <dc/account.h>
+#include <dc/refable.h>
+
+#include "internal.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-struct ncdc_account_
+struct dc_account_
 {
-    ncdc_refable_t ref; /* do not move anything above ref */
+    dc_refable_t ref; /* do not move anything above ref */
 
     char *email;
     char *password;
@@ -21,7 +23,7 @@ struct ncdc_account_
     char *token;
 };
 
-static void ncdc_account_free(ncdc_account_t ptr)
+static void dc_account_free(dc_account_t ptr)
 {
     return_if_true(ptr == NULL,);
 
@@ -31,28 +33,28 @@ static void ncdc_account_free(ncdc_account_t ptr)
     free(ptr);
 }
 
-ncdc_account_t ncdc_account_new(void)
+dc_account_t dc_account_new(void)
 {
-    ncdc_account_t ptr = calloc(1, sizeof(struct ncdc_account_));
+    dc_account_t ptr = calloc(1, sizeof(struct dc_account_));
 
-    ptr->ref.cleanup = (cleanup_t)ncdc_account_free;
+    ptr->ref.cleanup = (dc_cleanup_t)dc_account_free;
 
-    return ncdc_ref(ptr);
+    return dc_ref(ptr);
 }
 
-ncdc_account_t ncdc_account_new2(char const *email, char const *pass)
+dc_account_t dc_account_new2(char const *email, char const *pass)
 {
-    ncdc_account_t ptr = ncdc_account_new();
+    dc_account_t ptr = dc_account_new();
 
     if (ptr != NULL) {
-        ncdc_account_set_email(ptr, email);
-        ncdc_account_set_password(ptr, pass);
+        dc_account_set_email(ptr, email);
+        dc_account_set_password(ptr, pass);
     }
 
     return ptr;
 }
 
-void ncdc_account_set_email(ncdc_account_t a, char const *email)
+void dc_account_set_email(dc_account_t a, char const *email)
 {
     return_if_true(a == NULL,);
     return_if_true(email == NULL,);
@@ -61,13 +63,13 @@ void ncdc_account_set_email(ncdc_account_t a, char const *email)
     a->email = strdup(email);
 }
 
-char const *ncdc_account_email(ncdc_account_t a)
+char const *dc_account_email(dc_account_t a)
 {
     return_if_true(a == NULL, NULL);
     return a->email;
 }
 
-void ncdc_account_set_password(ncdc_account_t a, char const *password)
+void dc_account_set_password(dc_account_t a, char const *password)
 {
     return_if_true(a == NULL,);
     return_if_true(password == NULL,);
@@ -76,13 +78,13 @@ void ncdc_account_set_password(ncdc_account_t a, char const *password)
     a->password = strdup(password);
 }
 
-char const *ncdc_account_password(ncdc_account_t a)
+char const *dc_account_password(dc_account_t a)
 {
     return_if_true(a == NULL, NULL);
     return a->password;
 }
 
-void ncdc_account_set_token(ncdc_account_t a, char const *token)
+void dc_account_set_token(dc_account_t a, char const *token)
 {
     return_if_true(a == NULL,);
 
@@ -94,27 +96,27 @@ void ncdc_account_set_token(ncdc_account_t a, char const *token)
     }
 }
 
-char const *ncdc_account_token(ncdc_account_t a)
+char const *dc_account_token(dc_account_t a)
 {
     return_if_true(a == NULL, NULL);
     return a->token;
 }
 
-bool ncdc_account_has_token(ncdc_account_t a)
+bool dc_account_has_token(dc_account_t a)
 {
     return_if_true(a == NULL, false);
     return_if_true(a->token == NULL, false);
     return true;
 }
 
-void ncdc_account_set_id(ncdc_account_t a, char const *id)
+void dc_account_set_id(dc_account_t a, char const *id)
 {
     return_if_true(a == NULL,);
     free(a->id);
     a->id = strdup(id);
 }
 
-char const *ncdc_account_id(ncdc_account_t a)
+char const *dc_account_id(dc_account_t a)
 {
     return_if_true(a == NULL,NULL);
     return a->id;

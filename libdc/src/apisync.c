@@ -1,9 +1,11 @@
-#include <ncdc/apisync.h>
-#include <ncdc/refable.h>
+#include <dc/apisync.h>
+#include <dc/refable.h>
 
-struct ncdc_api_sync_
+#include "internal.h"
+
+struct dc_api_sync_
 {
-    ncdc_refable_t ref;
+    dc_refable_t ref;
 
     int code;
 
@@ -19,7 +21,7 @@ struct ncdc_api_sync_
     struct curl_slist *list;
 };
 
-static void ncdc_api_sync_free(ncdc_api_sync_t s)
+static void dc_api_sync_free(dc_api_sync_t s)
 {
     return_if_true(s == NULL,);
 
@@ -46,13 +48,13 @@ static void ncdc_api_sync_free(ncdc_api_sync_t s)
     free(s);
 }
 
-ncdc_api_sync_t ncdc_api_sync_new(CURLM *curl, CURL *easy)
+dc_api_sync_t dc_api_sync_new(CURLM *curl, CURL *easy)
 {
-    ncdc_api_sync_t ptr = calloc(1, sizeof(struct ncdc_api_sync_));
+    dc_api_sync_t ptr = calloc(1, sizeof(struct dc_api_sync_));
     return_if_true(ptr == NULL, NULL);
 
     ptr->easy = easy;
-    ptr->ref.cleanup = (cleanup_t)ncdc_api_sync_free;
+    ptr->ref.cleanup = (dc_cleanup_t)dc_api_sync_free;
 
     ptr->stream = open_memstream(&ptr->buffer, &ptr->bufferlen);
     if (ptr->stream == NULL) {
@@ -65,40 +67,40 @@ ncdc_api_sync_t ncdc_api_sync_new(CURLM *curl, CURL *easy)
 
     ptr->list = curl_slist_append(NULL, "");
 
-    return ncdc_ref(ptr);
+    return dc_ref(ptr);
 }
 
-struct curl_slist *ncdc_api_sync_list(ncdc_api_sync_t sync)
+struct curl_slist *dc_api_sync_list(dc_api_sync_t sync)
 {
     return_if_true(sync == NULL, NULL);
     return sync->list;
 }
 
-FILE *ncdc_api_sync_stream(ncdc_api_sync_t sync)
+FILE *dc_api_sync_stream(dc_api_sync_t sync)
 {
     return_if_true(sync == NULL, NULL);
     return sync->stream;
 }
 
-char const *ncdc_api_sync_data(ncdc_api_sync_t sync)
+char const *dc_api_sync_data(dc_api_sync_t sync)
 {
     return_if_true(sync == NULL, NULL);
     return sync->buffer;
 }
 
-size_t ncdc_api_sync_datalen(ncdc_api_sync_t sync)
+size_t dc_api_sync_datalen(dc_api_sync_t sync)
 {
     return_if_true(sync == NULL, 0L);
     return sync->bufferlen;
 }
 
-int ncdc_api_sync_code(ncdc_api_sync_t sync)
+int dc_api_sync_code(dc_api_sync_t sync)
 {
     return_if_true(sync == NULL, 0L);
     return sync->code;
 }
 
-bool ncdc_api_sync_wait(ncdc_api_sync_t sync)
+bool dc_api_sync_wait(dc_api_sync_t sync)
 {
     return_if_true(sync == NULL, false);
 
@@ -113,7 +115,7 @@ bool ncdc_api_sync_wait(ncdc_api_sync_t sync)
     return (sync->stream == NULL && sync->buffer != NULL);
 }
 
-void ncdc_api_sync_finish(ncdc_api_sync_t sync, int code)
+void dc_api_sync_finish(dc_api_sync_t sync, int code)
 {
     return_if_true(sync == NULL,);
 

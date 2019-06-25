@@ -1,5 +1,5 @@
 #include <ncdc/ncdc.h>
-#include <ncdc/api.h>
+#include <dc/api.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -15,8 +15,8 @@ struct event *timer = NULL;
 static bool done = false;
 static pthread_t looper;
 
-char *ncdc_private_dir = NULL;
-char *ncdc_config_file = NULL;
+char *dc_private_dir = NULL;
+char *dc_config_file = NULL;
 
 static GKeyFile *config = NULL;
 
@@ -24,7 +24,7 @@ static GKeyFile *config = NULL;
  */
 CURLM *curl = NULL;
 
-ncdc_api_t api = NULL;
+dc_api_t api = NULL;
 
 static void handle_multi_info(void);
 
@@ -158,16 +158,16 @@ static bool init_everything(void)
 
     /* initialise event
      */
-    api = ncdc_api_new();
+    api = dc_api_new();
     return_if_true(api == NULL, false);
 
-    ncdc_api_set_event_base(api, base);
-    ncdc_api_set_curl_multi(api, curl);
+    dc_api_set_event_base(api, base);
+    dc_api_set_curl_multi(api, curl);
 
     config = g_key_file_new();
     return_if_true(config == NULL, false);
 
-    g_key_file_load_from_file(config, ncdc_config_file, 0, NULL);
+    g_key_file_load_from_file(config, dc_config_file, 0, NULL);
 
     return true;
 }
@@ -187,7 +187,7 @@ static void handle_multi_info(void)
             }
         }
         if (msg->msg == CURLMSG_DONE) {
-            ncdc_api_signal(api, msg->easy_handle, msg->data.result);
+            dc_api_signal(api, msg->easy_handle, msg->data.result);
         }
     } else {
         usleep(10 * 1000);
@@ -210,7 +210,7 @@ static void *loop_thread(void *arg)
     return NULL;
 }
 
-static ncdc_account_t account_from_config(void)
+static dc_account_t account_from_config(void)
 {
     char const *email = NULL;
     char const *password = NULL;
@@ -221,8 +221,8 @@ static ncdc_account_t account_from_config(void)
 
     return_if_true(email == NULL || password == NULL, NULL);
 
-    ptr = ncdc_account_new2(email, password);
-    ncdc_account_set_id(ptr, "@me");
+    ptr = dc_account_new2(email, password);
+    dc_account_set_id(ptr, "@me");
 
     return ptr;
 }
@@ -240,16 +240,16 @@ int main(int ac, char **av)
         return 3;
     }
 
-    asprintf(&ncdc_private_dir, "%s/.ncdc", getenv("HOME"));
-    if (mkdir(ncdc_private_dir, 0755) < 0) {
+    asprintf(&dc_private_dir, "%s/.ncdc", getenv("HOME"));
+    if (mkdir(dc_private_dir, 0755) < 0) {
         if (errno != EEXIST) {
-            fprintf(stderr, "failed to make %s: %s\n", ncdc_private_dir,
+            fprintf(stderr, "failed to make %s: %s\n", dc_private_dir,
                     strerror(errno));
             return 3;
         }
     }
 
-    asprintf(&ncdc_config_file, "%s/config", ncdc_private_dir);
+    asprintf(&dc_config_file, "%s/config", dc_private_dir);
 
     if (!init_everything()) {
         return 3;
@@ -260,18 +260,18 @@ int main(int ac, char **av)
         return 3;
     }
 
-    ncdc_account_t a = account_from_config();
+    dc_account_t a = account_from_config();
     if (a == NULL) {
         fprintf(stderr, "no account specified in config file; sho-sho!\n");
         return 3;
     }
 
-    if (!ncdc_api_authenticate(api, a)) {
+    if (!dc_api_authenticate(api, a)) {
         fprintf(stderr, "authentication failed, wrong password?\n");
         return 3;
     }
 
-    if (!ncdc_api_userinfo(api, a, a)) {
+    if (!dc_api_userinfo(api, a, a)) {
         fprintf(stderr, "failed to get user information\n");
         return 3;
     }
