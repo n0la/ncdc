@@ -3,6 +3,6 @@
 
 #include <jansson.h>
 
-void ncdc_util_dump_json(json_t *j);
+void dc_util_dump_json(json_t *j);
 
 #endif

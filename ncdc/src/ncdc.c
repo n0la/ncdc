@@ -240,7 +240,7 @@ int main(int ac, char **av)
         return 3;
     }
 
-    asprintf(&dc_private_dir, "%s/.ncdc", getenv("HOME"));
+    asprintf(&dc_private_dir, "%s/.ndc", getenv("HOME"));
     if (mkdir(dc_private_dir, 0755) < 0) {
         if (errno != EEXIST) {
             fprintf(stderr, "failed to make %s: %s\n", dc_private_dir,

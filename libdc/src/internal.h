@@ -21,6 +21,8 @@
 #include <event.h>
 #include <event2/thread.h>
 
+#include <dc/util.h>
+
 //#define DEBUG
 
 #define return_if_true(v,r) do { if (v) return r; } while(0)
