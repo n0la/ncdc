@@ -11,11 +11,13 @@ SET(SOURCES
   "include/dc/account.h"
   "include/dc/api.h"
   "include/dc/apisync.h"
+  "include/dc/loop.h"
   "include/dc/refable.h"
   "include/dc/util.h"
   "src/account.c"
   "src/api.c"
   "src/apisync.c"
+  "src/loop.c"
   "src/refable.c"
   "src/util.c"
   )
