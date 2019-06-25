@@ -336,7 +336,7 @@ bool dc_api_userinfo(dc_api_t api, dc_account_t login,
                        dc_account_t user)
 {
     char *url = NULL;
-    json_t *reply = NULL;
+    json_t *reply = NULL, *val = NULL;
     bool ret = false;
 
     return_if_true(api == NULL, false);
@@ -348,9 +348,17 @@ bool dc_api_userinfo(dc_api_t api, dc_account_t login,
     reply = dc_api_call_sync(api, dc_account_token(login), url, NULL);
     goto_if_true(reply == NULL, cleanup);
 
-    /* TODO: parse json and store info in user
-     */
-    dc_util_dump_json(reply);
+    val = json_object_get(reply, "username");
+    goto_if_true(val == NULL || !json_is_string(val), cleanup);
+    dc_account_set_username(user, json_string_value(val));
+
+    val = json_object_get(reply, "discriminator");
+    goto_if_true(val == NULL || !json_is_string(val), cleanup);
+    dc_account_set_discriminator(user, json_string_value(val));
+
+    val = json_object_get(reply, "id");
+    goto_if_true(val == NULL || !json_is_string(val), cleanup);
+    dc_account_set_id(user, json_string_value(val));
 
     ret = true;
 

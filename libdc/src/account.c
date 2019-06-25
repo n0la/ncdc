@@ -17,6 +17,15 @@ struct dc_account_
     /* internal ID
      */
     char *id;
+    /* username
+     */
+    char *username;
+    /* discriminator
+     */
+    char *discriminator;
+    /* full username username#discriminator
+     */
+    char *full;
 
     /* authentication token
      */
@@ -120,4 +129,51 @@ char const *dc_account_id(dc_account_t a)
 {
     return_if_true(a == NULL,NULL);
     return a->id;
+}
+
+void dc_account_update_full(dc_account_t a)
+{
+    free(a->full);
+    a->full = NULL;
+
+    asprintf(&a->full, "%s/%s",
+             (a->username != NULL ? a->username : ""),
+             (a->discriminator != NULL ? a->discriminator : "")
+        );
+}
+
+void dc_account_set_username(dc_account_t a, char const *id)
+{
+    return_if_true(a == NULL,);
+
+    free(a->username);
+    a->username = strdup(id);
+    dc_account_update_full(a);
+}
+
+char const *dc_account_username(dc_account_t a)
+{
+    return_if_true(a == NULL, NULL);
+    return a->username;
+}
+
+void dc_account_set_discriminator(dc_account_t a, char const *id)
+{
+    return_if_true(a == NULL,);
+
+    free(a->discriminator);
+    a->discriminator = strdup(id);
+    dc_account_update_full(a);
+}
+
+char const *dc_account_discriminator(dc_account_t a)
+{
+    return_if_true(a == NULL, NULL);
+    return a->discriminator;
+}
+
+char const *dc_account_full_username(dc_account_t a)
+{
+    return_if_true(a == NULL, NULL);
+    return a->full;
 }
