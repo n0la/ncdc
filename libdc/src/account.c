@@ -38,6 +38,11 @@ static void dc_account_free(dc_account_t ptr)
 
     free(ptr->email);
     free(ptr->password);
+    free(ptr->id);
+    free(ptr->username);
+    free(ptr->discriminator);
+    free(ptr->full);
+    free(ptr->token);
 
     free(ptr);
 }

@@ -25,13 +25,30 @@ void dc_api_signal(dc_api_t api, CURL *easy, int code);
 /* internal curl stuff
  */
 dc_api_sync_t dc_api_call(dc_api_t api, char const *token,
-                          char const *method, json_t *j);
+                          char const *verb, char const *method,
+                          json_t *j);
 json_t *dc_api_call_sync(dc_api_t api, char const *token,
-                         char const *method, json_t *j);
+                         char const *verb, char const *method,
+                         json_t *j);
 
+/**
+ * Authenticate a given user account. The user account should have
+ * email, and password set. If the auth succeeds the account will have
+ * a login token, and will from now on be the "login account". You
+ * will have to pass that account to various other functions for
+ * authentication.
+ */
 bool dc_api_authenticate(dc_api_t api, dc_account_t account);
-bool dc_api_userinfo(dc_api_t api, dc_account_t logion,
-                     dc_account_t user);
 
+/**
+ * Retrieve basic user information for the given account. The first
+ * parameter is the user account holding login info, while the second
+ * is the account you wish to retrieve information about.
+ */
+bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
+                         dc_account_t user);
+
+bool dc_api_get_userguilds(dc_api_t api, dc_account_t login,
+                           GPtrArray *guilds);
 
 #endif

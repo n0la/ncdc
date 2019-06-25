@@ -25,6 +25,8 @@ char const *dc_account_username(dc_account_t a);
 void dc_account_set_discriminator(dc_account_t a, char const *id);
 char const *dc_account_discriminator(dc_account_t a);
 
+char const *dc_account_full_username(dc_account_t a);
+
 void dc_account_set_token(dc_account_t a, char const *token);
 char const *dc_account_token(dc_account_t a);
 bool dc_account_has_token(dc_account_t a);

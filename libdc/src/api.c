@@ -100,33 +100,15 @@ static int debug_callback(CURL *handle, curl_infotype type,
 }
 #endif
 
-static int header_callback(char *data, size_t sz, size_t num, dc_api_t api)
-{
-    char *ptr =  NULL;
-
-    if ((ptr = strstr(data, "set-cookie")) != NULL) {
-        free(api->cookie);
-        api->cookie = NULL;
-
-        if ((ptr = strstr(data, ":")) != NULL) {
-            api->cookie = strdup(ptr+1);
-            if ((ptr = strstr(api->cookie, ";")) != NULL) {
-                *ptr = '\0';
-            }
-        }
-    }
-
-    return sz * num;
-}
-
-static dc_api_sync_t dc_api_post(dc_api_t api,
-                                 char const *url,
-                                 char const *token,
-                                 char const *data, int64_t len)
+static dc_api_sync_t
+dc_api_do(dc_api_t api, char const *verb,
+          char const *url, char const *token,
+          char const *data, int64_t len)
 {
     return_if_true(api == NULL, NULL);
     return_if_true(api->curl == NULL, NULL);
     return_if_true(url == NULL, NULL);
+    return_if_true(verb == NULL, NULL);
 
     CURL *c = NULL;
     bool ret = false;
@@ -144,8 +126,6 @@ static dc_api_sync_t dc_api_post(dc_api_t api,
     curl_easy_setopt(c, CURLOPT_URL, url);
     curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, fwrite);
     curl_easy_setopt(c, CURLOPT_WRITEDATA, dc_api_sync_stream(sync));
-    curl_easy_setopt(c, CURLOPT_HEADERFUNCTION, header_callback);
-    curl_easy_setopt(c, CURLOPT_HEADERDATA, api);
 
     if (api->cookie != NULL) {
         curl_easy_setopt(c, CURLOPT_COOKIE, api->cookie);
@@ -177,13 +157,21 @@ static dc_api_sync_t dc_api_post(dc_api_t api,
     curl_easy_setopt(c, CURLOPT_DEBUGFUNCTION, debug_callback);
 #endif
 
-    if (data != NULL) {
+    if (strcmp(verb, "POST") == 0) {
         curl_easy_setopt(c, CURLOPT_POST, 1UL);
         curl_easy_setopt(c, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
+    }
+
+    if (data != NULL) {
         curl_easy_setopt(c, CURLOPT_COPYPOSTFIELDS, data);
         if (len >= 0) {
             curl_easy_setopt(c, CURLOPT_POSTFIELDSIZE_LARGE, len);
         }
+    }
+
+    if (strcmp(verb, "PUT") == 0 ||
+        strcmp(verb, "DELETE") == 0) {
+        curl_easy_setopt(c, CURLOPT_CUSTOMREQUEST, verb);
     }
 
     if (curl_multi_add_handle(api->curl, c) != CURLM_OK) {
@@ -206,7 +194,8 @@ cleanup:
 }
 
 dc_api_sync_t dc_api_call(dc_api_t api, char const *token,
-                              char const *method, json_t *j)
+                          char const *verb, char const *method,
+                          json_t *j)
 {
     char *data = NULL;
     char *url = NULL;
@@ -220,7 +209,7 @@ dc_api_sync_t dc_api_call(dc_api_t api, char const *token,
         goto_if_true(data == NULL, cleanup);
     }
 
-    s = dc_api_post(api, url, token, data, -1);
+    s = dc_api_do(api, verb, url, token, data, -1);
     goto_if_true(s == NULL, cleanup);
 
 cleanup:
@@ -235,12 +224,13 @@ cleanup:
 }
 
 json_t *dc_api_call_sync(dc_api_t api, char const *token,
-                           char const *method, json_t *j)
+                         char const *verb, char const *method,
+                         json_t *j)
 {
     dc_api_sync_t s = NULL;
     json_t *reply = NULL;
 
-    s = dc_api_call(api, token, method, j);
+    s = dc_api_call(api, verb, token, method, j);
     goto_if_true(s == NULL, cleanup);
 
     if (!dc_api_sync_wait(s)) {
@@ -302,7 +292,7 @@ bool dc_api_authenticate(dc_api_t api, dc_account_t account)
                         json_string(dc_account_password(account))
         );
 
-    reply = dc_api_call_sync(api, NULL, DISCORD_API_AUTH, j);
+    reply = dc_api_call_sync(api, "POST", NULL, DISCORD_API_AUTH, j);
     goto_if_true(reply == NULL, cleanup);
 
     if (dc_api_error(j, NULL, NULL)) {
@@ -332,8 +322,8 @@ cleanup:
     return ret;
 }
 
-bool dc_api_userinfo(dc_api_t api, dc_account_t login,
-                       dc_account_t user)
+bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
+                         dc_account_t user)
 {
     char *url = NULL;
     json_t *reply = NULL, *val = NULL;
@@ -345,7 +335,7 @@ bool dc_api_userinfo(dc_api_t api, dc_account_t login,
 
     asprintf(&url, "users/%s", dc_account_id(user));
 
-    reply = dc_api_call_sync(api, dc_account_token(login), url, NULL);
+    reply = dc_api_call_sync(api, "GET", dc_account_token(login), url, NULL);
     goto_if_true(reply == NULL, cleanup);
 
     val = json_object_get(reply, "username");
@@ -369,5 +359,27 @@ cleanup:
         reply = NULL;
     }
 
+    return ret;
+}
+
+bool dc_api_get_userguilds(dc_api_t api, dc_account_t login,
+                           
+{
+    char *url = NULL;
+    json_t *reply = NULL, *val = NULL;
+    bool ret = false;
+
+    return_if_true(api == NULL, false);
+    return_if_true(login == NULL, false);
+    return_if_true(user == NULL, false);
+
+    asprintf(&url, "users/%s/guilds", dc_account_id(user));
+
+    reply = dc_api_call_sync(api, "GET", dc_account_token(login), url, NULL);
+    goto_if_true(reply == NULL, cleanup);
+
+cleanup:
+
+    json_decref(reply);
     return ret;
 }

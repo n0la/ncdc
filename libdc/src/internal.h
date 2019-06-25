@@ -23,7 +23,7 @@
 
 #include <dc/util.h>
 
-//#define DEBUG
+#define DEBUG
 
 #define return_if_true(v,r) do { if (v) return r; } while(0)
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)
