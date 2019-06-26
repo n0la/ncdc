@@ -21,7 +21,14 @@
 #include <event.h>
 #include <event2/thread.h>
 
-//#define DEBUG
+#include <curses.h>
+#include <panel.h>
+#include <readline/history.h>
+#include <readline/readline.h>
+
+#include <dc/refable.h>
+#include <dc/api.h>
+#include <dc/loop.h>
 
 #define return_if_true(v,r) do { if (v) return r; } while(0)
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)

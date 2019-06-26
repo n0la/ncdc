@@ -3,11 +3,13 @@
 
 #include <dc/apisync.h>
 #include <dc/account.h>
+#include <dc/guild.h>
 
 #include <stdbool.h>
 
 #include <jansson.h>
 #include <event.h>
+#include <glib.h>
 
 struct dc_api_;
 typedef struct dc_api_ *dc_api_t;
@@ -48,7 +50,11 @@ bool dc_api_authenticate(dc_api_t api, dc_account_t account);
 bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
                          dc_account_t user);
 
+/**
+ * Fetch a list of guilds fro the specified login user. Warning if you
+ * unref the pointer array, you will also unref all the dc_guild_t objects.
+ */
 bool dc_api_get_userguilds(dc_api_t api, dc_account_t login,
-                           GPtrArray *guilds);
+                           GPtrArray **guilds);
 
 #endif

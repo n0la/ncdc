@@ -199,7 +199,7 @@ bool dc_loop_once(dc_loop_t l)
     struct CURLMsg *msg = NULL;
     size_t i = 0;
 
-    ret = event_base_loop(l->base, EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    ret = event_base_loop(l->base, EVLOOP_ONCE);
     if (ret < 0) {
         return false;
     }

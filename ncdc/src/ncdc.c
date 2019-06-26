@@ -1,8 +1,5 @@
 #include <ncdc/ncdc.h>
-
-#include <dc/refable.h>
-#include <dc/api.h>
-#include <dc/loop.h>
+#include <ncdc/mainwindow.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -11,10 +8,13 @@
  */
 struct event *stdin_ev = NULL;
 
+/* main window
+ */
+ncdc_mainwindow_t mainwin = NULL;
+
 /* we loop in a different thread
  */
 static bool done = false;
-static pthread_t looper;
 
 char *dc_private_dir = NULL;
 char *dc_config_file = NULL;
@@ -26,11 +26,14 @@ dc_api_t api = NULL;
 
 static void sighandler(int sig)
 {
+    endwin();
     exit(3);
 }
 
 static void cleanup(void)
 {
+    endwin();
+
     if (stdin_ev != NULL) {
         event_del(stdin_ev);
         event_free(stdin_ev);
@@ -38,7 +41,6 @@ static void cleanup(void)
     }
 
     done = true;
-    pthread_join(looper, NULL);
 
     dc_unref(api);
     dc_unref(loop);
@@ -46,6 +48,12 @@ static void cleanup(void)
 
 static void stdin_handler(int sock, short what, void *data)
 {
+    int ch = 0;
+
+    if ((what & EV_READ) == EV_READ) {
+        ch = getch();
+        ncdc_mainwindow_feed(ch);
+    }
 }
 
 static bool init_everything(void)
@@ -79,20 +87,7 @@ static bool init_everything(void)
     return true;
 }
 
-static void *loop_thread(void *arg)
-{
-    while (!done) {
-        if (!dc_loop_once(loop)) {
-            break;
-        }
-
-        usleep(10 * 1000);
-    }
-
-    return NULL;
-}
-
-static dc_account_t account_from_config(void)
+dc_account_t account_from_config(void)
 {
     char const *email = NULL;
     char const *password = NULL;
@@ -138,25 +133,32 @@ int main(int ac, char **av)
     }
 
     done = false;
-    if (pthread_create(&looper, NULL, loop_thread, &done)) {
+
+    initscr();
+    cbreak();
+    noecho();
+    nonl();
+    intrflush(NULL, FALSE);
+
+    if (has_colors()) {
+        start_color();
+        use_default_colors();
+    }
+
+    if (!ncdc_mainwindow_init()) {
+        fprintf(stderr, "failed to init ncurses\n");
         return 3;
     }
 
-    dc_account_t a = account_from_config();
-    if (a == NULL) {
-        fprintf(stderr, "no account specified in config file; sho-sho!\n");
-        return 3;
+    while (!done) {
+        ncdc_mainwindow_refresh();
+
+        if (!dc_loop_once(loop)) {
+            break;
+        }
     }
 
-    if (!dc_api_authenticate(api, a)) {
-        fprintf(stderr, "authentication failed, wrong password?\n");
-        return 3;
-    }
-
-    if (!dc_api_userinfo(api, a, a)) {
-        fprintf(stderr, "failed to get user information\n");
-        return 3;
-    }
+    endwin();
 
     return 0;
 }

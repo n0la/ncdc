@@ -126,8 +126,11 @@ bool dc_account_has_token(dc_account_t a)
 void dc_account_set_id(dc_account_t a, char const *id)
 {
     return_if_true(a == NULL,);
-    free(a->id);
-    a->id = strdup(id);
+
+    if (a->id == NULL || strcmp(a->id, "@me")) {
+        free(a->id);
+        a->id = strdup(id);
+    }
 }
 
 char const *dc_account_id(dc_account_t a)

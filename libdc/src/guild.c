@@ -26,7 +26,7 @@ dc_guild_t dc_guild_new(void)
 
     p->ref.cleanup = (dc_cleanup_t)dc_guild_free;
 
-    return p;
+    return dc_ref(p);
 }
 
 char const *dc_guild_name(dc_guild_t d)
