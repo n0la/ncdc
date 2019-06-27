@@ -48,17 +48,16 @@ static void cleanup(void)
 
 static void stdin_handler(int sock, short what, void *data)
 {
-    int ch = 0;
-
     if ((what & EV_READ) == EV_READ) {
-        ch = getch();
-        ncdc_mainwindow_feed(ch);
+        ncdc_mainwindow_input_ready(mainwin);
     }
 }
 
 static bool init_everything(void)
 {
     evthread_use_pthreads();
+
+    setlocale(LC_CTYPE, "");
 
     loop = dc_loop_new();
     return_if_true(loop == NULL, false);
@@ -135,29 +134,34 @@ int main(int ac, char **av)
     done = false;
 
     initscr();
-    cbreak();
     noecho();
     nonl();
+    keypad(stdscr, TRUE);
     intrflush(NULL, FALSE);
 
     if (has_colors()) {
         start_color();
         use_default_colors();
+
+        init_pair(1, COLOR_WHITE, COLOR_BLUE);
     }
 
-    if (!ncdc_mainwindow_init()) {
+    mainwin = ncdc_mainwindow_new();
+    if (mainwin == NULL) {
         fprintf(stderr, "failed to init ncurses\n");
         return 3;
     }
 
     while (!done) {
-        ncdc_mainwindow_refresh();
+        ncdc_mainwindow_refresh(mainwin);
+        doupdate();
 
         if (!dc_loop_once(loop)) {
             break;
         }
     }
 
+    dc_unref(mainwin);
     endwin();
 
     return 0;

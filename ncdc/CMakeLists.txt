@@ -1,16 +1,20 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
-PKG_CHECK_MODULES(NCURSES REQUIRED ncurses)
+PKG_CHECK_MODULES(NCURSES REQUIRED ncursesw)
 PKG_CHECK_MODULES(PANEL REQUIRED panel)
-FIND_PACKAGE(Readline)
+PKG_CHECK_MODULES(EDIT REQUIRED libedit)
 
 SET(TARGET "ncdc")
 
 SET(SOURCES
+  "include/ncdc/input.h"
   "include/ncdc/mainwindow.h"
   "include/ncdc/ncdc.h"
+  "src/emacs.c"
+  "src/input.c"
   "src/mainwindow.c"
   "src/ncdc.c"
+  "src/util.c"
   )
 
 INCLUDE_DIRECTORIES(
@@ -22,7 +26,7 @@ INCLUDE_DIRECTORIES(
   ${GLIB2_INCLUDE_DIRS}
   ${NCURSES_INCLUDE_DIRS}
   ${PANEL_INCLUDE_DIRS}
-  ${Readline_INCLUDE_DIR}
+  ${EDIT_INCLUDE_DIRS}
   )
 
 ADD_EXECUTABLE(${TARGET} ${SOURCES})
@@ -31,5 +35,5 @@ TARGET_LINK_LIBRARIES(${TARGET}
   ${GLIB2_LIBRARIES}
   ${NCURSES_LIBRARIES}
   ${PANEL_LIBRARIES}
-  ${Readline_LIBRARY}
+  ${EDIT_LIBRARIES}
   )

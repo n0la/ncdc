@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <wctype.h>
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -23,8 +24,8 @@
 
 #include <curses.h>
 #include <panel.h>
-#include <readline/history.h>
-#include <readline/readline.h>
+
+#include <locale.h>
 
 #include <dc/refable.h>
 #include <dc/api.h>
@@ -34,5 +35,8 @@
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)
 
 extern char *ncdc_private_dir;
+
+int strwidth(char const *string);
+char *read_char(FILE *stream);
 
 #endif

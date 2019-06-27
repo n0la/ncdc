@@ -1,4 +1,5 @@
 #include <ncdc/mainwindow.h>
+#include <ncdc/input.h>
 #include <ncdc/ncdc.h>
 
 typedef enum {
@@ -28,141 +29,105 @@ struct ncdc_mainwindow_
     int input_h;
     int input_y;
     int input_x;
+    int input_curs_x;
 
-    char *cmd;
-    int cin;
-    bool cin_ready;
+    WINDOW *sep1;
+    WINDOW *sep2;
+
+    ncdc_input_t in;
 
     int focus;
 };
 
-static ncdc_mainwindow_t mainwin = NULL;
+static void ncdc_mainwindow_resize(ncdc_mainwindow_t n);
+static void ncdc_mainwindow_update_focus(ncdc_mainwindow_t n);
 
-static void mainwin_resize(void);
-static void mainwin_update_focus(void);
-static void mainwin_command(char *s);
-
-static int readline_input_avail(void)
+static void ncdc_mainwindow_free(ncdc_mainwindow_t n)
 {
-    return mainwin->cin_ready;
+    return_if_true(n == NULL,);
+
+    delwin(n->guilds);
+    delwin(n->chat);
+    delwin(n->input);
+
+    delwin(n->sep1);
+    delwin(n->sep2);
+
+    dc_unref(n->in);
+
+    free(n);
 }
 
-static int readline_getc(FILE *dummy)
+ncdc_mainwindow_t ncdc_mainwindow_new(void)
 {
-    mainwin->cin_ready = false;
-    return mainwin->cin;
+    ncdc_mainwindow_t ptr = calloc(1, sizeof(struct ncdc_mainwindow_));
+    return_if_true(ptr == NULL, NULL);
+
+    ptr->ref.cleanup = (dc_cleanup_t)ncdc_mainwindow_free;
+
+    ptr->in = ncdc_input_new();
+
+    ptr->guilds = newwin(5, 5, 1, 1);
+    ptr->chat = newwin(5, 5, 4, 4);
+
+    ptr->input = newwin(5, 5, 8, 8);
+    keypad(ptr->input, TRUE);
+
+    ptr->sep1 = newwin(5, 5, 10, 10);
+    ptr->sep2 = newwin(5, 5, 12, 12);
+
+    ncdc_mainwindow_resize(ptr);
+
+    ptr->focus = FOCUS_INPUT;
+    ncdc_mainwindow_update_focus(ptr);
+
+    return ptr;
 }
 
-static int measure(char const *string)
+static void ncdc_mainwindow_resize(ncdc_mainwindow_t n)
 {
-    size_t needed = mbstowcs(NULL, string, 0) + 1;
-    wchar_t *wcstring = calloc(needed, sizeof(wchar_t));
-    size_t ret = 0;
+    n->guilds_h = LINES - 2;
+    n->guilds_w = (COLS / 5);
+    n->guilds_y = 0;
+    n->guilds_x = 0;
 
-    return_if_true(wcstring == NULL, -1);
+    wresize(n->guilds, n->guilds_h, n->guilds_w);
+    mvwin(n->guilds, n->guilds_y, n->guilds_x);
+    wnoutrefresh(n->guilds);
 
-    ret = mbstowcs(wcstring, string, needed);
-    if (ret == (size_t)-1) {
-        free(wcstring);
-        return -1;
-    }
+    n->input_h = 1;
+    n->input_w = COLS;
+    n->input_y = LINES - n->input_h;
+    n->input_x = 0;
 
-    int width = wcswidth(wcstring, needed);
-    free(wcstring);
+    wresize(n->input, n->input_h, n->input_w);
+    mvwin(n->input, n->input_y, n->input_x);
+    wnoutrefresh(n->input);
 
-    return width;
+    wresize(n->sep1, 1, COLS);
+    mvwin(n->sep1, LINES - 2, 0);
+    wbkgd(n->sep1, COLOR_PAIR(1));
+    wnoutrefresh(n->sep1);
+
+    n->chat_h = LINES - n->input_h - 1;
+    n->chat_w = COLS - n->guilds_w - 1;
+    n->chat_y = 0;
+    n->chat_x = n->guilds_w + 1;
+
+    wresize(n->chat, n->chat_h, n->chat_w);
+    mvwin(n->chat, n->chat_y, n->chat_x);
+    wnoutrefresh(n->chat);
+
+    wresize(n->sep2, LINES - 2, 1);
+    mvwin(n->sep2, 0, n->guilds_w + 1);
+    wnoutrefresh(n->sep2);
+
+    ncdc_mainwindow_update_focus(n);
 }
 
-static void readline_redisplay(void)
+static void ncdc_mainwindow_update_focus(ncdc_mainwindow_t n)
 {
-    int len = 0;
-    char *line = NULL;
-    int diff = 0;
-
-    asprintf(&line, "%s%s",
-             (rl_display_prompt != NULL ? rl_display_prompt : ""),
-             (rl_line_buffer != NULL ? rl_line_buffer : "")
-        );
-    len = measure(line);
-
-    diff = len - mainwin->input_w + 3;
-    if (diff > 0) {
-        memmove(line, line + diff, len - diff);
-        line[len-diff] = '\0';
-    }
-
-    werase(mainwin->input);
-    mvwprintw(mainwin->input, 1, 1, "%s", line);
-    free(line);
-
-    wrefresh(mainwin->input);
-}
-
-bool ncdc_mainwindow_init(void)
-{
-    mainwin = calloc(1, sizeof(struct ncdc_mainwindow_));
-    return_if_true(mainwin == NULL, false);
-
-    mainwin->guilds = newwin(5, 5, 1, 1);
-    mainwin->chat = newwin(5, 5, 4, 4);
-    mainwin->input = newwin(5, 5, 8, 8);
-    mainwin_resize();
-
-    mainwin->focus = FOCUS_INPUT;
-    mainwin_update_focus();
-
-    rl_getc_function = readline_getc;
-    rl_input_available_hook = readline_input_avail;
-    rl_redisplay_function = readline_redisplay;
-    rl_callback_handler_install("", mainwin_command);
-
-    rl_catch_signals = 0;
-    rl_catch_sigwinch = 0;
-    rl_deprep_term_function = NULL;
-    rl_prep_term_function = NULL;
-
-    return true;
-}
-
-static void mainwin_resize(void)
-{
-    mainwin->guilds_h = LINES;
-    mainwin->guilds_w = (COLS / 5);
-    mainwin->guilds_y = 0;
-    mainwin->guilds_x = 0;
-
-    wresize(mainwin->guilds, mainwin->guilds_h, mainwin->guilds_w);
-    mvwin(mainwin->guilds, mainwin->guilds_y, mainwin->guilds_x);
-    wnoutrefresh(mainwin->guilds);
-
-    mainwin->input_h = 3;
-    mainwin->input_w = COLS - mainwin->guilds_w;
-    mainwin->input_y = LINES - mainwin->input_h;
-    mainwin->input_x = mainwin->guilds_w;
-
-    wresize(mainwin->input, mainwin->input_h, mainwin->input_w);
-    mvwin(mainwin->input, mainwin->input_y, mainwin->input_x);
-    wnoutrefresh(mainwin->input);
-
-    mainwin->chat_h = LINES - mainwin->input_h;
-    mainwin->chat_w = COLS - mainwin->guilds_w;
-    mainwin->chat_y = 0;
-    mainwin->chat_x = mainwin->guilds_w;
-
-    wresize(mainwin->chat, mainwin->chat_h, mainwin->chat_w);
-    mvwin(mainwin->chat, mainwin->chat_y, mainwin->chat_x);
-    wnoutrefresh(mainwin->chat);
-}
-
-static void mainwin_command(char *s)
-{
-    free(mainwin->cmd);
-    mainwin->cmd = s;
-}
-
-static void mainwin_update_focus(void)
-{
-    switch (mainwin->focus) {
+    switch (n->focus) {
     case FOCUS_GUILDS:
     {
     } break;
@@ -173,41 +138,48 @@ static void mainwin_update_focus(void)
 
     case FOCUS_INPUT:
     {
-        int x = 1, y = 1;
-        wmove(mainwin->input, y, x);
+        wmove(n->input, 0, ncdc_input_cursor(n->in));
+        wrefresh(n->input);
     } break;
 
     }
 }
 
-void ncdc_mainwindow_feed(int ch)
+void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
 {
-    switch (ch) {
-    case KEY_RESIZE: mainwin_resize(); break;
-    }
-
-    switch (mainwin->focus) {
+    switch (n->focus) {
     case FOCUS_INPUT:
     {
-        mainwin->cin = ch;
-        mainwin->cin_ready = true;
-        rl_callback_read_char();
+        wint_t i = 0;
+
+        if (wget_wch(n->input, &i) == ERR) {
+            return;
+        }
+
+        if (i == KEY_RESIZE) {
+            ncdc_mainwindow_resize(n);
+        } else {
+            ncdc_input_feed(n->in, (wchar_t)i);
+        }
     } break;
 
     }
 }
 
-void ncdc_mainwindow_refresh(void)
+void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
 {
-    /* move windows
-     */
-    box(mainwin->guilds, 0, 0);
-    box(mainwin->chat, 0, 0);
-    box(mainwin->input, 0, 0);
+    wnoutrefresh(n->guilds);
+    wnoutrefresh(n->chat);
 
-    wrefresh(mainwin->guilds);
-    wrefresh(mainwin->chat);
-    wrefresh(mainwin->input);
+    ncdc_input_draw(n->in, n->input);
+    wnoutrefresh(n->input);
+
+    wbkgd(n->sep1, COLOR_PAIR(1));
+    wnoutrefresh(n->sep1);
+    wbkgd(n->sep2, COLOR_PAIR(1));
+    wnoutrefresh(n->sep2);
+
+    ncdc_mainwindow_update_focus(n);
 
     doupdate();
 }
