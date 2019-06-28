@@ -1,5 +1,19 @@
 #include <ncdc/ncdc.h>
 
+wchar_t const *w_next_word(wchar_t const *w, ssize_t len)
+{
+    size_t i = 0;
+
+    if (len < 0) {
+        len = wcslen(w);
+    }
+
+    for (; !iswspace(w[i]) && i < len; i++)
+        ;
+
+    return w+i;
+}
+
 char *read_char(FILE *stream)
 {
     uint8_t str[7] = {0};

@@ -7,9 +7,11 @@ PKG_CHECK_MODULES(EDIT REQUIRED libedit)
 SET(TARGET "ncdc")
 
 SET(SOURCES
+  "include/ncdc/cmds.h"
   "include/ncdc/input.h"
   "include/ncdc/mainwindow.h"
   "include/ncdc/ncdc.h"
+  "src/cmds.c"
   "src/emacs.c"
   "src/input.c"
   "src/mainwindow.c"

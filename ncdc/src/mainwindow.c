@@ -1,5 +1,6 @@
 #include <ncdc/mainwindow.h>
 #include <ncdc/input.h>
+#include <ncdc/cmds.h>
 #include <ncdc/ncdc.h>
 
 typedef enum {
@@ -41,6 +42,8 @@ struct ncdc_mainwindow_
 
 static void ncdc_mainwindow_resize(ncdc_mainwindow_t n);
 static void ncdc_mainwindow_update_focus(ncdc_mainwindow_t n);
+static bool ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
+                                     size_t len, void *arg);
 
 static void ncdc_mainwindow_free(ncdc_mainwindow_t n)
 {
@@ -66,6 +69,7 @@ ncdc_mainwindow_t ncdc_mainwindow_new(void)
     ptr->ref.cleanup = (dc_cleanup_t)ncdc_mainwindow_free;
 
     ptr->in = ncdc_input_new();
+    ncdc_input_set_callback(ptr->in, ncdc_mainwindow_callback, ptr);
 
     ptr->guilds = newwin(5, 5, 1, 1);
     ptr->chat = newwin(5, 5, 4, 4);
@@ -82,6 +86,27 @@ ncdc_mainwindow_t ncdc_mainwindow_new(void)
     ncdc_mainwindow_update_focus(ptr);
 
     return ptr;
+}
+
+static bool
+ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
+                         size_t len, void *arg)
+{
+    ncdc_mainwindow_t mainwin = (ncdc_mainwindow_t)arg;
+
+    if (s[0] == '/') {
+        size_t i = 0;
+        wchar_t const *n = w_next_word(s, len);
+
+        for (; cmds[i].name != NULL; i++) {
+            if (wcsncmp(s+1, cmds[i].name, (n-s-1)) == 0) {
+                cmds[i].handler(mainwin, s, len);
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 static void ncdc_mainwindow_resize(ncdc_mainwindow_t n)

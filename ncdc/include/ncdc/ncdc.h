@@ -39,4 +39,6 @@ extern char *ncdc_private_dir;
 int strwidth(char const *string);
 char *read_char(FILE *stream);
 
+wchar_t const *w_next_word(wchar_t const *w, ssize_t len);
+
 #endif
