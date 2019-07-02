@@ -360,13 +360,40 @@ cleanup:
     return ret;
 }
 
+bool dc_api_get_friends(dc_api_t api, dc_account_t login, GPtrArray **friends)
+{
+    char *url = NULL;
+    json_t *reply = NULL;
+    bool ret = false;
+
+    return_if_true(api == NULL, false);
+    return_if_true(login == NULL, false);
+
+    asprintf(&url, "users/%s/guilds", dc_account_id(login));
+
+    reply = dc_api_call_sync(api, "GET", dc_account_token(login), url, NULL);
+    goto_if_true(reply == NULL, cleanup);
+
+    dc_util_dump_json(reply);
+    ret = true;
+
+cleanup:
+
+    json_decref(reply);
+    reply = NULL;
+
+    return ret;
+}
+
 bool dc_api_get_userguilds(dc_api_t api, dc_account_t login, GPtrArray **out)
 {
     char *url = NULL;
     json_t *reply = NULL, *c = NULL, *val = NULL;
     size_t i = 0;
     bool ret = false;
-    GPtrArray *guilds = g_ptr_array_new_with_free_func((GDestroyNotify)dc_unref);
+    GPtrArray *guilds = g_ptr_array_new_with_free_func(
+        (GDestroyNotify)dc_unref
+        );
 
     return_if_true(api == NULL, false);
     return_if_true(login == NULL, false);

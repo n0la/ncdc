@@ -1,5 +1,6 @@
 #include <ncdc/mainwindow.h>
 #include <ncdc/input.h>
+#include <ncdc/textview.h>
 #include <ncdc/cmds.h>
 #include <ncdc/ncdc.h>
 
@@ -36,6 +37,7 @@ struct ncdc_mainwindow_
     WINDOW *sep2;
 
     ncdc_input_t in;
+    ncdc_textview_t log;
 
     int focus;
 };
@@ -57,6 +59,7 @@ static void ncdc_mainwindow_free(ncdc_mainwindow_t n)
     delwin(n->sep2);
 
     dc_unref(n->in);
+    dc_unref(n->log);
 
     free(n);
 }
@@ -70,6 +73,8 @@ ncdc_mainwindow_t ncdc_mainwindow_new(void)
 
     ptr->in = ncdc_input_new();
     ncdc_input_set_callback(ptr->in, ncdc_mainwindow_callback, ptr);
+
+    ptr->log = ncdc_textview_new();
 
     ptr->guilds = newwin(5, 5, 1, 1);
     ptr->chat = newwin(5, 5, 4, 4);
@@ -95,15 +100,11 @@ ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
     ncdc_mainwindow_t mainwin = (ncdc_mainwindow_t)arg;
 
     if (s[0] == '/') {
-        size_t i = 0;
-        wchar_t const *n = w_next_word(s, len);
-
-        for (; cmds[i].name != NULL; i++) {
-            if (wcsncmp(s+1, cmds[i].name, (n-s-1)) == 0) {
-                cmds[i].handler(mainwin, s, len);
-                return true;
-            }
+        if (s[1] == '\0') {
+            return false;
         }
+
+        return ncdc_dispatch(mainwin, s+1);
     }
 
     return false;
@@ -135,9 +136,9 @@ static void ncdc_mainwindow_resize(ncdc_mainwindow_t n)
     wnoutrefresh(n->sep1);
 
     n->chat_h = LINES - n->input_h - 1;
-    n->chat_w = COLS - n->guilds_w - 1;
+    n->chat_w = COLS - n->guilds_w - 2;
     n->chat_y = 0;
-    n->chat_x = n->guilds_w + 1;
+    n->chat_x = n->guilds_w + 2;
 
     wresize(n->chat, n->chat_h, n->chat_w);
     mvwin(n->chat, n->chat_y, n->chat_x);
@@ -194,6 +195,8 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
 void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
 {
     wnoutrefresh(n->guilds);
+
+    ncdc_textview_render(n->log, n->chat, n->chat_h, n->chat_w);
     wnoutrefresh(n->chat);
 
     ncdc_input_draw(n->in, n->input);
@@ -205,6 +208,18 @@ void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
     wnoutrefresh(n->sep2);
 
     ncdc_mainwindow_update_focus(n);
+}
 
-    doupdate();
+void ncdc_mainwindow_log(ncdc_mainwindow_t w, wchar_t const *fmt, ...)
+{
+    va_list lst;
+    wchar_t buf[256] = {0};
+
+    return_if_true(w == NULL || fmt == NULL,);
+
+    va_start(lst, fmt);
+    vswprintf(buf, 255, fmt, lst);
+    va_end(lst);
+
+    ncdc_textview_append(w->log, buf);
 }

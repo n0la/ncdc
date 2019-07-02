@@ -30,15 +30,32 @@
 #include <dc/refable.h>
 #include <dc/api.h>
 #include <dc/loop.h>
+#include <dc/account.h>
 
 #define return_if_true(v,r) do { if (v) return r; } while(0)
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)
 
+struct ncdc_account_ {
+    dc_account_t account;
+    GPtrArray *friends;
+    GPtrArray *guilds;
+};
+
+typedef struct ncdc_account_ *ncdc_account_t;
+
+extern GHashTable *accounts;
 extern char *ncdc_private_dir;
+extern void *config;
 
 int strwidth(char const *string);
 char *read_char(FILE *stream);
 
+char *w_convert(wchar_t const *w);
+wchar_t* wcsndup(const wchar_t* string, size_t maxlen);
+size_t w_strlenv(wchar_t **s);
+void w_strfreev(wchar_t **s);
+wchar_t **w_tokenise(wchar_t const *w);
+wchar_t *w_next_tok(wchar_t const *w);
 wchar_t const *w_next_word(wchar_t const *w, ssize_t len);
 
 #endif

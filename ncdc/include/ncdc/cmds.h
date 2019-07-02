@@ -5,7 +5,7 @@
 #include <ncdc/mainwindow.h>
 
 typedef bool (*ncdc_command_t)(ncdc_mainwindow_t n,
-                               wchar_t const *s, size_t len);
+                               size_t argc, wchar_t **argv);
 
 typedef struct {
     wchar_t const *name;
@@ -14,6 +14,9 @@ typedef struct {
 
 extern ncdc_commands_t cmds[];
 
-bool ncdc_cmd_quit(ncdc_mainwindow_t n, wchar_t const *s, size_t len);
+bool ncdc_dispatch(ncdc_mainwindow_t n, wchar_t const *s);
+
+bool ncdc_cmd_quit(ncdc_mainwindow_t n, size_t ac, wchar_t **av);
+bool ncdc_cmd_login(ncdc_mainwindow_t n, size_t ac, wchar_t **av);
 
 #endif

@@ -1,5 +1,6 @@
 #include <ncdc/ncdc.h>
 #include <ncdc/mainwindow.h>
+#include <ncdc/config.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -16,13 +17,33 @@ ncdc_mainwindow_t mainwin = NULL;
  */
 static bool done = false;
 
-char *dc_private_dir = NULL;
-char *dc_config_file = NULL;
+/* all the accounts we have logged into
+ */
+GHashTable *accounts = NULL;
 
-static GKeyFile *config = NULL;
+char *ncdc_private_dir = NULL;
+void *config = NULL;
 
 dc_loop_t loop = NULL;
 dc_api_t api = NULL;
+
+static void ncdc_account_free(void *ptr)
+{
+    ncdc_account_t a = (ncdc_account_t)ptr;
+
+    return_if_true(ptr == NULL,);
+
+    if (a->friends != NULL) {
+        g_ptr_array_unref(a->friends);
+    }
+
+    if (a->guilds != NULL) {
+        g_ptr_array_unref(a->guilds);
+    }
+
+    dc_unref(a->account);
+    free(ptr);
+}
 
 static void sighandler(int sig)
 {
@@ -42,8 +63,16 @@ static void cleanup(void)
 
     done = true;
 
+    if (accounts != NULL) {
+        g_hash_table_unref(accounts);
+        accounts = NULL;
+    }
+
     dc_unref(api);
     dc_unref(loop);
+
+    dc_unref(config);
+    dc_unref(mainwin);
 }
 
 static void stdin_handler(int sock, short what, void *data)
@@ -78,29 +107,15 @@ static bool init_everything(void)
 
     dc_loop_add_api(loop, api);
 
-    config = g_key_file_new();
+    config = ncdc_config_new();
     return_if_true(config == NULL, false);
 
-    g_key_file_load_from_file(config, dc_config_file, 0, NULL);
+    accounts = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                     g_free, ncdc_account_free
+        );
+    return_if_true(accounts == NULL, false);
 
     return true;
-}
-
-dc_account_t account_from_config(void)
-{
-    char const *email = NULL;
-    char const *password = NULL;
-    void *ptr = NULL;
-
-    email = g_key_file_get_string(config, "account", "email", NULL);
-    password = g_key_file_get_string(config, "account", "password", NULL);
-
-    return_if_true(email == NULL || password == NULL, NULL);
-
-    ptr = dc_account_new2(email, password);
-    dc_account_set_id(ptr, "@me");
-
-    return ptr;
 }
 
 int main(int ac, char **av)
@@ -116,16 +131,14 @@ int main(int ac, char **av)
         return 3;
     }
 
-    asprintf(&dc_private_dir, "%s/.ndc", getenv("HOME"));
-    if (mkdir(dc_private_dir, 0755) < 0) {
+    asprintf(&ncdc_private_dir, "%s/.ncdc", getenv("HOME"));
+    if (mkdir(ncdc_private_dir, 0755) < 0) {
         if (errno != EEXIST) {
-            fprintf(stderr, "failed to make %s: %s\n", dc_private_dir,
+            fprintf(stderr, "failed to make %s: %s\n", ncdc_private_dir,
                     strerror(errno));
             return 3;
         }
     }
-
-    asprintf(&dc_config_file, "%s/config", dc_private_dir);
 
     if (!init_everything()) {
         return 3;

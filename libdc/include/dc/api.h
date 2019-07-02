@@ -57,4 +57,10 @@ bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
 bool dc_api_get_userguilds(dc_api_t api, dc_account_t login,
                            GPtrArray **guilds);
 
+/**
+ * Fetch a list of friends of the login account "login". Returns a GPtrArray
+ * of dc_account_t which automatically cleans itself up.
+ */
+bool dc_api_get_friends(dc_api_t api, dc_account_t login, GPtrArray **friends);
+
 #endif
