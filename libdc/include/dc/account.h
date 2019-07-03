@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 struct dc_account_;
 typedef struct dc_account_ *dc_account_t;
@@ -30,5 +31,11 @@ char const *dc_account_full_username(dc_account_t a);
 void dc_account_set_token(dc_account_t a, char const *token);
 char const *dc_account_token(dc_account_t a);
 bool dc_account_has_token(dc_account_t a);
+
+/* relationships
+ */
+void dc_account_set_friends(dc_account_t a, dc_account_t *ptr, size_t len);
+dc_account_t dc_account_nthfriend(dc_account_t a, size_t i);
+size_t dc_account_friends_size(dc_account_t a);
 
 #endif

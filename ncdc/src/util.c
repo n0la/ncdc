@@ -14,6 +14,25 @@ wchar_t const *w_next_word(wchar_t const *w, ssize_t len)
     return w+i;
 }
 
+int aswprintf(wchar_t **buffer, wchar_t const *fmt, ...)
+{
+    size_t sz = 0;
+    FILE *f = NULL;
+    va_list lst;
+
+    f = open_wmemstream(buffer, &sz);
+    if (f == NULL) {
+        return -1;
+    }
+
+    va_start(lst, fmt);
+    vfwprintf(f, fmt, lst);
+    va_end(lst);
+
+    fclose(f);
+    return sz;
+}
+
 wchar_t* wcsndup(const wchar_t* string, size_t maxlen)
 {
     size_t n = wcsnlen(string, maxlen) + 1;

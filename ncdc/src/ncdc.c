@@ -1,6 +1,7 @@
 #include <ncdc/ncdc.h>
 #include <ncdc/mainwindow.h>
 #include <ncdc/config.h>
+#include <ncdc/cmds.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -15,45 +16,31 @@ ncdc_mainwindow_t mainwin = NULL;
 
 /* we loop in a different thread
  */
-static bool done = false;
+bool main_done = false;
+static pthread_t event_thread;
+static struct event_base *base = NULL;
 
 /* all the accounts we have logged into
  */
 GHashTable *accounts = NULL;
+dc_account_t current_account = NULL;
 
 char *ncdc_private_dir = NULL;
 void *config = NULL;
 
 dc_loop_t loop = NULL;
+
+/* API handle we use for everything
+ */
 dc_api_t api = NULL;
-
-static void ncdc_account_free(void *ptr)
-{
-    ncdc_account_t a = (ncdc_account_t)ptr;
-
-    return_if_true(ptr == NULL,);
-
-    if (a->friends != NULL) {
-        g_ptr_array_unref(a->friends);
-    }
-
-    if (a->guilds != NULL) {
-        g_ptr_array_unref(a->guilds);
-    }
-
-    dc_unref(a->account);
-    free(ptr);
-}
-
-static void sighandler(int sig)
-{
-    endwin();
-    exit(3);
-}
 
 static void cleanup(void)
 {
     endwin();
+
+    main_done = true;
+    dc_loop_abort(loop);
+    pthread_join(event_thread, NULL);
 
     if (stdin_ev != NULL) {
         event_del(stdin_ev);
@@ -61,7 +48,9 @@ static void cleanup(void)
         stdin_ev = NULL;
     }
 
-    done = true;
+    event_base_loopbreak(base);
+    event_base_free(base);
+    base = NULL;
 
     if (accounts != NULL) {
         g_hash_table_unref(accounts);
@@ -75,6 +64,12 @@ static void cleanup(void)
     dc_unref(mainwin);
 }
 
+static void sighandler(int sig)
+{
+    cleanup();
+    exit(3);
+}
+
 static void stdin_handler(int sock, short what, void *data)
 {
     if ((what & EV_READ) == EV_READ) {
@@ -82,18 +77,38 @@ static void stdin_handler(int sock, short what, void *data)
     }
 }
 
+static void *looper(void *arg)
+{
+    while (!main_done) {
+        if (!dc_loop_once(loop)) {
+            break;
+        }
+
+        usleep(10 * 1000);
+    }
+
+    return NULL;
+}
+
 static bool init_everything(void)
 {
+    int ret = 0;
+
     evthread_use_pthreads();
 
     setlocale(LC_CTYPE, "");
+
+    return_if_true(!ncdc_dispatch_init(), false);
+
+    base = event_base_new();
+    return_if_true(base == NULL, false);
 
     loop = dc_loop_new();
     return_if_true(loop == NULL, false);
 
     /* add handle for STDIN, this info will then be fed to the UI
      */
-    stdin_ev = event_new(dc_loop_event_base(loop), 0 /* stdin */,
+    stdin_ev = event_new(base, 0 /* stdin */,
                          EV_READ|EV_PERSIST,
                          stdin_handler, NULL
         );
@@ -111,18 +126,25 @@ static bool init_everything(void)
     return_if_true(config == NULL, false);
 
     accounts = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                     g_free, ncdc_account_free
+                                     g_free, dc_unref
         );
     return_if_true(accounts == NULL, false);
+
+    ret = pthread_create(&event_thread, NULL, looper, NULL);
+    return_if_true(ret != 0, false);
 
     return true;
 }
 
+void exit_main(void)
+{
+    main_done = true;
+    event_base_loopbreak(base);
+}
+
 int main(int ac, char **av)
 {
-    bool done = false;
-
-    atexit(cleanup);
+    int ret = 0;
 
     signal(SIGINT, sighandler);
 
@@ -144,8 +166,6 @@ int main(int ac, char **av)
         return 3;
     }
 
-    done = false;
-
     initscr();
     noecho();
     nonl();
@@ -165,17 +185,19 @@ int main(int ac, char **av)
         return 3;
     }
 
-    while (!done) {
+    while (!main_done) {
         ncdc_mainwindow_refresh(mainwin);
         doupdate();
 
-        if (!dc_loop_once(loop)) {
+        ret = event_base_loop(base, EVLOOP_ONCE|EVLOOP_NONBLOCK);
+        if (ret < 0) {
             break;
         }
+
+        usleep(10*1000);
     }
 
-    dc_unref(mainwin);
-    endwin();
+    cleanup();
 
     return 0;
 }

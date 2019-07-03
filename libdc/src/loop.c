@@ -191,6 +191,12 @@ void dc_loop_add_api(dc_loop_t l, dc_api_t a)
     g_ptr_array_add(l->apis, p);
 }
 
+void dc_loop_abort(dc_loop_t l)
+{
+    return_if_true(l == NULL || l->base == NULL,);
+    event_base_loopbreak(l->base);
+}
+
 bool dc_loop_once(dc_loop_t l)
 {
     return_if_true(l == NULL, false);

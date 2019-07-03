@@ -16,6 +16,7 @@ SET(SOURCES
   "src/cmds.c"
   "src/config.c"
   "src/emacs.c"
+  "src/friends.c"
   "src/input.c"
   "src/login.c"
   "src/mainwindow.c"

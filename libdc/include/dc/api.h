@@ -45,7 +45,9 @@ bool dc_api_authenticate(dc_api_t api, dc_account_t account);
 /**
  * Retrieve basic user information for the given account. The first
  * parameter is the user account holding login info, while the second
- * is the account you wish to retrieve information about.
+ * is the account you wish to retrieve information about. If you wish
+ * to retrieve information about the login user, simply pass the account
+ * twice.
  */
 bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
                          dc_account_t user);
@@ -58,9 +60,9 @@ bool dc_api_get_userguilds(dc_api_t api, dc_account_t login,
                            GPtrArray **guilds);
 
 /**
- * Fetch a list of friends of the login account "login". Returns a GPtrArray
- * of dc_account_t which automatically cleans itself up.
+ * Fetch a list of friends of the login account "login". The friends are stored
+ * within the login object.
  */
-bool dc_api_get_friends(dc_api_t api, dc_account_t login, GPtrArray **friends);
+bool dc_api_get_friends(dc_api_t api, dc_account_t login);
 
 #endif

@@ -40,8 +40,10 @@ void ncdc_textview_append(ncdc_textview_t v, wchar_t const *w)
 
     while ((p = wcschr(p, '\n')) != NULL) {
         wchar_t *dup = wcsndup(p, p - last);
-        g_ptr_array_add(v->par, dup);
-        last = p;
+        if (dup != NULL) {
+            g_ptr_array_add(v->par, dup);
+            last = p;
+        }
     }
 
     g_ptr_array_add(v->par, wcsdup(last));

@@ -45,4 +45,9 @@ void dc_loop_add_api(dc_loop_t loop, dc_api_t api);
  */
 bool dc_loop_once(dc_loop_t l);
 
+/**
+ * Abort the whole event looping shenanigans
+ */
+void dc_loop_abort(dc_loop_t l);
+
 #endif

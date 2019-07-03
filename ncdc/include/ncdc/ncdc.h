@@ -44,12 +44,20 @@ struct ncdc_account_ {
 typedef struct ncdc_account_ *ncdc_account_t;
 
 extern GHashTable *accounts;
+extern dc_account_t current_account;
+
+extern dc_api_t api;
+
 extern char *ncdc_private_dir;
 extern void *config;
+extern void *mainwindow;
+
+void exit_main(void);
 
 int strwidth(char const *string);
 char *read_char(FILE *stream);
 
+int aswprintf(wchar_t **buffer, wchar_t const *fmt, ...);
 char *w_convert(wchar_t const *w);
 wchar_t* wcsndup(const wchar_t* string, size_t maxlen);
 size_t w_strlenv(wchar_t **s);

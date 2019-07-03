@@ -30,6 +30,10 @@ struct dc_account_
     /* authentication token
      */
     char *token;
+
+    /* friends we have
+     */
+    GPtrArray *friends;
 };
 
 static void dc_account_free(dc_account_t ptr)
@@ -44,6 +48,11 @@ static void dc_account_free(dc_account_t ptr)
     free(ptr->full);
     free(ptr->token);
 
+    if (ptr->friends != NULL) {
+        g_ptr_array_unref(ptr->friends);
+        ptr->friends = NULL;
+    }
+
     free(ptr);
 }
 
@@ -52,6 +61,10 @@ dc_account_t dc_account_new(void)
     dc_account_t ptr = calloc(1, sizeof(struct dc_account_));
 
     ptr->ref.cleanup = (dc_cleanup_t)dc_account_free;
+
+    ptr->friends = g_ptr_array_new_with_free_func(
+        (GDestroyNotify)dc_unref
+        );
 
     return dc_ref(ptr);
 }
@@ -144,7 +157,7 @@ void dc_account_update_full(dc_account_t a)
     free(a->full);
     a->full = NULL;
 
-    asprintf(&a->full, "%s/%s",
+    asprintf(&a->full, "%s#%s",
              (a->username != NULL ? a->username : ""),
              (a->discriminator != NULL ? a->discriminator : "")
         );
@@ -184,4 +197,27 @@ char const *dc_account_full_username(dc_account_t a)
 {
     return_if_true(a == NULL, NULL);
     return a->full;
+}
+
+void dc_account_set_friends(dc_account_t a, dc_account_t *friends, size_t len)
+{
+    size_t i = 0;
+    return_if_true(a == NULL || a->friends == NULL,);
+
+    g_ptr_array_remove_range(a->friends, 0, a->friends->len);
+    for (i = 0; i < len; i++) {
+        g_ptr_array_add(a->friends, friends[i]);
+    }
+}
+
+dc_account_t dc_account_nthfriend(dc_account_t a, size_t i)
+{
+    return_if_true(a == NULL || a->friends == NULL, NULL);
+    return (dc_account_t)g_ptr_array_index(a->friends, i);
+}
+
+size_t dc_account_friends_size(dc_account_t a)
+{
+    return_if_true(a == NULL || a->friends == NULL, 0);
+    return a->friends->len;
 }
