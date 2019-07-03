@@ -65,4 +65,9 @@ bool dc_api_get_userguilds(dc_api_t api, dc_account_t login,
  */
 bool dc_api_get_friends(dc_api_t api, dc_account_t login);
 
+/**
+ * Add a given account as a friend to the friends list
+ */
+bool dc_api_add_friend(dc_api_t api, dc_account_t login, dc_account_t friend);
+
 #endif

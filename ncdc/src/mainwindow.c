@@ -99,12 +99,12 @@ ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
 {
     ncdc_mainwindow_t mainwin = (ncdc_mainwindow_t)arg;
 
-    if (s[0] == '/') {
+    if (s != NULL && s[0] == '/') {
         if (s[1] == '\0') {
             return false;
         }
 
-        return ncdc_dispatch(mainwin, s+1);
+        return ncdc_dispatch(mainwin, s);
     }
 
     return false;

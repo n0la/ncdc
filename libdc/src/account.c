@@ -34,6 +34,9 @@ struct dc_account_
     /* friends we have
      */
     GPtrArray *friends;
+    /* our own friend state
+     */
+    int friend_state;
 };
 
 static void dc_account_free(dc_account_t ptr)
@@ -79,6 +82,38 @@ dc_account_t dc_account_new2(char const *email, char const *pass)
     }
 
     return ptr;
+}
+
+dc_account_t dc_account_from_fullid(char const *fullid)
+{
+    return_if_true(fullid == NULL, NULL);
+
+    char *name = strdup(fullid), *discriminator = NULL;
+    dc_account_t acc = NULL;
+
+    return_if_true(name == NULL, NULL);
+
+    discriminator = strchr(name, '#');
+    if (discriminator == NULL || *discriminator == '\0') {
+        free(name);
+        return NULL;
+    }
+
+    *discriminator = '\0';
+    ++discriminator;
+
+    acc = dc_account_new();
+    if (acc == NULL) {
+        free(name);
+        return NULL;
+    }
+
+    dc_account_set_username(acc, name);
+    dc_account_set_discriminator(acc, discriminator);
+
+    free(name);
+
+    return acc;
 }
 
 void dc_account_set_email(dc_account_t a, char const *email)
@@ -218,4 +253,16 @@ size_t dc_account_friends_size(dc_account_t a)
 {
     return_if_true(a == NULL || a->friends == NULL, 0);
     return a->friends->len;
+}
+
+int dc_account_friend_state(dc_account_t a)
+{
+    return_if_true(a == NULL, 0);
+    return a->friend_state;
+}
+
+void dc_account_set_friend_state(dc_account_t a, int state)
+{
+    return_if_true(a == NULL,);
+    a->friend_state = state;
 }

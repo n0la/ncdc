@@ -349,6 +349,29 @@ error:
     return NULL;
 }
 
+static json_t *dc_api_user_to_json(dc_account_t a)
+{
+    json_t *j = NULL;
+
+    return_if_true(a == NULL, NULL);
+    return_if_true(dc_account_username(a) == NULL ||
+                   dc_account_discriminator(a) == NULL,
+                   NULL
+        );
+
+    j = json_object();
+    return_if_true(j == NULL, NULL);
+
+    json_object_set_new(j, "username",
+                        json_string(dc_account_username(a))
+        );
+    json_object_set_new(j, "discriminator",
+                        json_string(dc_account_discriminator(a))
+        );
+
+    return j;
+}
+
 bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
                          dc_account_t user)
 {
@@ -420,6 +443,15 @@ bool dc_api_get_friends(dc_api_t api, dc_account_t login)
         if (a == NULL) {
             continue;
         }
+
+        /* read the type also known as "typ"
+         */
+        val = json_object_get(c, "type");
+        if (val != NULL && json_is_integer(val)) {
+            int state = json_integer_value(val);
+            dc_account_set_friend_state(a, state);
+        }
+
         g_ptr_array_add(f, a);
     }
 
@@ -436,6 +468,36 @@ cleanup:
     g_ptr_array_free(f, FALSE);
     json_decref(reply);
     reply = NULL;
+
+    return ret;
+}
+
+/**
+ * Add a given account as a friend to the friends list
+ */
+bool dc_api_add_friend(dc_api_t api, dc_account_t login, dc_account_t friend)
+{
+    char const *url = "users/@me/relationships";
+    json_t *reply = NULL, *post = NULL;
+    bool ret = false;
+
+    return_if_true(api == NULL, false);
+    return_if_true(login == NULL, false);
+
+    post = dc_api_user_to_json(friend);
+    return_if_true(post == NULL, false);
+
+    reply = dc_api_call_sync(api, "POST", dc_account_token(login), url, post);
+    /* apparently if no data comes back, then the whole thing was a success
+     */
+    goto_if_true(reply != NULL, cleanup);
+
+    ret = true;
+
+cleanup:
+
+    json_decref(post);
+    json_decref(reply);
 
     return ret;
 }

@@ -33,11 +33,11 @@ int aswprintf(wchar_t **buffer, wchar_t const *fmt, ...)
     return sz;
 }
 
-wchar_t* wcsndup(const wchar_t* string, size_t maxlen)
+wchar_t* wcsndup(wchar_t const* string, size_t maxlen)
 {
-    size_t n = wcsnlen(string, maxlen) + 1;
-    wchar_t* r = calloc(n, sizeof(wchar_t));
-    return r == NULL ? NULL : wmemcpy(r, string, n);
+    wchar_t* r = calloc(maxlen+1, sizeof(wchar_t));
+    return_if_true(r == NULL, NULL);
+    return wmemcpy(r, string, maxlen);
 }
 
 size_t w_strlenv(wchar_t **s)
@@ -61,28 +61,56 @@ void w_strfreev(wchar_t **s)
     free(s);
 }
 
-wchar_t **w_tokenise(wchar_t const *w)
+wchar_t **w_tokenise(wchar_t const *str)
 {
+    wchar_t const *p = NULL, *start_of_word = NULL;
+    wint_t c;
     GPtrArray *array = g_ptr_array_new();
-    wchar_t const *item = w;
-    wchar_t *dup = NULL;
-    size_t len = 0, origlen = 0;
+    enum states { DULL, IN_WORD, IN_STRING } state = DULL;
 
-    while ((dup = w_next_tok(item)) != NULL) {
-        len = origlen = wcslen(dup);
+    for (p = str; *p != '\0'; p++) {
+        c = (wint_t) *p;
+        switch (state) {
+        case DULL:
+        {
+            if (iswspace(c)) {
+                continue;
+            }
+            if (c == '"') {
+                state = IN_STRING;
+                start_of_word = p + 1;
+                continue;
+            }
+            state = IN_WORD;
+            start_of_word = p;
+        } continue;
 
-        if (*dup == '"') {
-            memmove(dup, dup+1, sizeof(wchar_t)*(len-1));
-            --len;
+        case IN_STRING:
+        {
+            if (c == '"') {
+                size_t len = (p - 2 - start_of_word);
+                wchar_t *s = wcsndup(start_of_word, len);
+                g_ptr_array_add(array, s);
+                state = DULL;
+            }
+        } continue;
+
+        case IN_WORD:
+        {
+            if (iswspace(c)) {
+                size_t len = (p - start_of_word);
+                wchar_t *s = wcsndup(start_of_word, len);
+                g_ptr_array_add(array, s);
+                state = DULL;
+            }
+        } continue;
         }
+    }
 
-        if (len > 0 && dup[len-1] == '"') {
-            dup[len-1] = '\0';
-            --len;
-        }
-
-        g_ptr_array_add(array, dup);
-        item += origlen;
+    if (state != DULL) {
+        size_t len = (p - start_of_word);
+        wchar_t *s = wcsndup(start_of_word, len);
+        g_ptr_array_add(array, s);
     }
 
     g_ptr_array_add(array, NULL);
@@ -102,41 +130,4 @@ char *w_convert(wchar_t const *w)
 
     wcstombs(ptr, w, sz);
     return ptr;
-}
-
-wchar_t *w_next_tok(wchar_t const *w)
-{
-    bool quotes = false;
-    wchar_t const *start = NULL;
-
-    /* skip first white spaces if there are any
-     */
-    for (; *w != '\0' && iswspace(*w); w++)
-        ;
-
-    if (*w == '\0') {
-        return NULL;
-    }
-
-    start = w;
-    quotes = (*w == '"');
-
-    do {
-        if (iswspace(*w) && !quotes) {
-            --w;
-            break;
-        }
-
-        if (*w == '"' && *(w-1) != '\\' && quotes) {
-            break;
-        }
-
-        if (*w == '\0') {
-            break;
-        }
-
-        ++w;
-    } while (1);
-
-    return wcsndup(start, (w - start));
 }
