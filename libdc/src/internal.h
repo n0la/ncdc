@@ -30,10 +30,4 @@
 #define return_if_true(v,r) do { if (v) return r; } while(0)
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)
 
-/* These are internal helper methods, their ABI, and API stability
- * is not garuanteed. So please beware
- */
-json_t *dc_api_account_to_json(dc_account_t a);
-dc_account_t dc_api_account_from_json(json_t *j);
-
 #endif

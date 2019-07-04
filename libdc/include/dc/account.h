@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <jansson.h>
+
 struct dc_account_;
 typedef struct dc_account_ *dc_account_t;
 
@@ -42,6 +44,9 @@ typedef enum {
 dc_account_t dc_account_new(void);
 dc_account_t dc_account_new2(char const *email, char const *pass);
 dc_account_t dc_account_from_fullname(char const *fullid);
+
+dc_account_t dc_account_from_json(json_t *j);
+json_t *dc_account_to_json(dc_account_t a);
 
 void dc_account_set_email(dc_account_t a, char const *email);
 char const *dc_account_email(dc_account_t a);

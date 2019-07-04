@@ -27,7 +27,7 @@ bool dc_api_get_friends(dc_api_t api, dc_account_t login)
             continue;
         }
 
-        dc_account_t a = dc_api_account_from_json(val);
+        dc_account_t a = dc_account_from_json(val);
         if (a == NULL) {
             continue;
         }
@@ -72,7 +72,7 @@ bool dc_api_remove_friend(dc_api_t api, dc_account_t login, dc_account_t friend)
 
     asprintf(&url, "users/@me/relationships/%s", dc_account_id(friend));
 
-    post = dc_api_account_to_json(friend);
+    post = dc_account_to_json(friend);
     return_if_true(post == NULL, false);
 
     reply = dc_api_call_sync(api, "DELETE", dc_account_token(login), url, post);
@@ -103,7 +103,7 @@ bool dc_api_accept_friend(dc_api_t api, dc_account_t login, dc_account_t friend)
 
     asprintf(&url, "users/@me/relationships/%s", dc_account_id(friend));
 
-    post = dc_api_account_to_json(friend);
+    post = dc_account_to_json(friend);
     return_if_true(post == NULL, false);
 
     reply = dc_api_call_sync(api, "PUT", dc_account_token(login), url, post);
@@ -131,7 +131,7 @@ bool dc_api_add_friend(dc_api_t api, dc_account_t login, dc_account_t friend)
     return_if_true(api == NULL, false);
     return_if_true(login == NULL, false);
 
-    post = dc_api_account_to_json(friend);
+    post = dc_account_to_json(friend);
     return_if_true(post == NULL, false);
 
     reply = dc_api_call_sync(api, "POST", dc_account_token(login), url, post);
