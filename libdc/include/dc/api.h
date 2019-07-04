@@ -70,4 +70,21 @@ bool dc_api_get_friends(dc_api_t api, dc_account_t login);
  */
 bool dc_api_add_friend(dc_api_t api, dc_account_t login, dc_account_t friend);
 
+/**
+ * Remove a given account as a friend to the friends list. Warning: The
+ * account ID (aka account snowflake) is required to perform this operation,
+ * so you cannot just do dc_account_from_fullname(). Suggestion: use an object
+ * from the actual friends list of the account login.
+ */
+bool dc_api_remove_friend(dc_api_t api, dc_account_t login,
+                          dc_account_t friend);
+
+/**
+ * Accepts someone who has sent a friend request to you, as a friend. Warning:
+ * The object "friend" requires an account ID (aka snowflake) for this method
+ * to work. You should take this object perhaps from the "login"'s friend list.
+ */
+bool dc_api_accept_friend(dc_api_t api, dc_account_t login,
+                          dc_account_t friend);
+
 #endif

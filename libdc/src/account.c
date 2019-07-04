@@ -84,7 +84,7 @@ dc_account_t dc_account_new2(char const *email, char const *pass)
     return ptr;
 }
 
-dc_account_t dc_account_from_fullid(char const *fullid)
+dc_account_t dc_account_from_fullname(char const *fullid)
 {
     return_if_true(fullid == NULL, NULL);
 
@@ -226,7 +226,7 @@ char const *dc_account_discriminator(dc_account_t a)
     return a->discriminator;
 }
 
-char const *dc_account_full_username(dc_account_t a)
+char const *dc_account_fullname(dc_account_t a)
 {
     return_if_true(a == NULL, NULL);
     return a->full;

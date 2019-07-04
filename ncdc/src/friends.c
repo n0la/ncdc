@@ -6,7 +6,7 @@ ncdc_cmd_friends_list(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
 {
     bool ret = false;
     size_t i = 0;
-    wchar_t c = ' ';
+    char c = ' ';
 
     ret = dc_api_get_friends(api, current_account);
     if (!ret) {
@@ -21,7 +21,7 @@ ncdc_cmd_friends_list(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
         case FRIEND_STATE_PENDING: c = 'P'; break;
         default: c = ' '; break;
         }
-        LOG(n, L"%lc %s", c, dc_account_full_username(acc));
+        LOG(n, L" %c %s", c, dc_account_fullname(acc));
     }
     LOG(n, L"End of /FRIENDS list");
 
@@ -42,7 +42,7 @@ ncdc_cmd_friends_add(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
     name = w_convert(av[1]);
     return_if_true(name == NULL, false);
 
-    friend = dc_account_from_fullid(name);
+    friend = dc_account_from_fullname(name);
     if (friend == NULL) {
         LOG(n, L"friends: add: invalid username given, use the full ID");
         goto cleanup;
@@ -53,7 +53,7 @@ ncdc_cmd_friends_add(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
         goto cleanup;
     }
 
-    LOG(n, L"friends: add: request for friendship sent");
+    LOG(n, L"friends: add: request for friendship sent to %s", name);
     ret = true;
 
 cleanup:
@@ -64,9 +64,105 @@ cleanup:
     return ret;
 }
 
+static bool
+ncdc_cmd_friends_remove(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
+{
+    char *name = NULL;
+    dc_account_t friend = NULL;
+    bool ret = false;
+    size_t i = 0;
+
+    if (ac <= 1) {
+        return false;
+    }
+
+    name = w_convert(av[1]);
+    return_if_true(name == NULL, false);
+
+    for (i = 0; i < dc_account_friends_size(current_account); i++) {
+        dc_account_t cur = dc_account_nthfriend(current_account, i);
+        if (strcmp(dc_account_fullname(cur), name) == 0) {
+            friend = cur;
+            break;
+        }
+    }
+
+    if (friend == NULL) {
+        LOG(n, L"friends: remove: no such friend in friend's list");
+        goto cleanup;
+    }
+
+    if (!dc_api_remove_friend(api, current_account, friend)) {
+        LOG(n, L"friends: remove: failed to remove friend");
+        goto cleanup;
+    }
+
+    LOG(n, L"friends: remove: friend %s removed", name);
+    ret = true;
+
+cleanup:
+
+    free(name);
+
+    return ret;
+}
+
+static bool
+ncdc_cmd_friends_accept(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
+{
+    char *name = NULL;
+    dc_account_t friend = NULL;
+    bool ret = false;
+    size_t i = 0;
+
+    if (ac <= 1) {
+        return false;
+    }
+
+    name = w_convert(av[1]);
+    return_if_true(name == NULL, false);
+
+    for (i = 0; i < dc_account_friends_size(current_account); i++) {
+        dc_account_t cur = dc_account_nthfriend(current_account, i);
+        if (strcmp(dc_account_fullname(cur), name) == 0 &&
+            dc_account_friend_state(cur) == FRIEND_STATE_PENDING) {
+            friend = cur;
+            break;
+        }
+    }
+
+    if (friend == NULL) {
+        LOG(n, L"friends: accept: no such pending friend on the list");
+        goto cleanup;
+    }
+
+    if (!dc_api_accept_friend(api, current_account, friend)) {
+        LOG(n, L"friends: accept: failed to accept friend");
+        goto cleanup;
+    }
+
+    LOG(n, L"friends: accept: friend %s accepted", name);
+    ret = true;
+
+cleanup:
+
+    free(name);
+
+    return ret;
+}
+
+static ncdc_commands_t subcmds[] = {
+    { L"accept", ncdc_cmd_friends_accept },
+    { L"add",    ncdc_cmd_friends_add },
+    { L"list",   ncdc_cmd_friends_list },
+    { L"remove", ncdc_cmd_friends_remove },
+    { NULL,     NULL }
+};
+
 bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
 {
     wchar_t *subcmd = NULL;
+    ncdc_commands_t *it = NULL;
 
     if (current_account == NULL ||
         !dc_account_has_token(current_account)) {
@@ -83,13 +179,10 @@ bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
     --ac;
     ++av;
 
-    if (wcscmp(subcmd, L"list") == 0) {
-        return ncdc_cmd_friends_list(n, ac, av);
-    } else if (wcscmp(subcmd, L"add") == 0) {
-        return ncdc_cmd_friends_add(n, ac, av);
-    } else {
+    if ((it = ncdc_find_cmd(subcmds, subcmd)) == NULL) {
+        LOG(n, L"friends: no such subcommand \"%ls\"", subcmd);
         return false;
     }
 
-    return true;
+    return it->handler(n, ac, av);
 }

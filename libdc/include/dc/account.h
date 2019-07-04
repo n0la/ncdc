@@ -13,14 +13,35 @@ typedef enum {
     /* accountt is a mutual friend
      */
     FRIEND_STATE_FRIEND = 1,
-    /* pending account, the other side hasn't accepted yet
+    /* pending friend request, the other side hasn't accepted yet
      */
-    FRIEND_STATE_PENDING = 4,
+    FRIEND_STATE_PENDING = 3,
 } dc_account_friend_states;
+
+/**
+ * Represents a given account within the discord system. To start your work,
+ * you will have to create an account object, give it email and password, and
+ * call the dc_api_authenticate() with it. This gives you a login token that
+ * you can use to call other API methods (such as dc_api_get_friends()) for
+ * that account.
+ *
+ * Accounts have a few important attributes that we store:
+ *   * ID (or snowflake), a 64 bit ID of the user, that we store as a string.
+ *   * username, a string that represents the accounts user name
+ *   * discriminator, a number that differentiates users with the same name
+ *   * email, for login accounts only
+ *   * password, for login accounts only
+ *   * friend_state, if the account is someone login account's friend, we store
+ *     the relationship in this flag. See the dc_account_friend_state enum for
+ *     details.
+ * And one compound attribute:
+ *   * fullname, a combination of username and discriminator separated by the
+ *     pound sign, e.g. nola#2457
+ */
 
 dc_account_t dc_account_new(void);
 dc_account_t dc_account_new2(char const *email, char const *pass);
-dc_account_t dc_account_from_fullid(char const *fullid);
+dc_account_t dc_account_from_fullname(char const *fullid);
 
 void dc_account_set_email(dc_account_t a, char const *email);
 char const *dc_account_email(dc_account_t a);
@@ -37,7 +58,7 @@ char const *dc_account_username(dc_account_t a);
 void dc_account_set_discriminator(dc_account_t a, char const *id);
 char const *dc_account_discriminator(dc_account_t a);
 
-char const *dc_account_full_username(dc_account_t a);
+char const *dc_account_fullname(dc_account_t a);
 
 void dc_account_set_token(dc_account_t a, char const *token);
 char const *dc_account_token(dc_account_t a);
@@ -48,6 +69,7 @@ bool dc_account_has_token(dc_account_t a);
 void dc_account_set_friends(dc_account_t a, dc_account_t *ptr, size_t len);
 dc_account_t dc_account_nthfriend(dc_account_t a, size_t i);
 size_t dc_account_friends_size(dc_account_t a);
+
 int dc_account_friend_state(dc_account_t a);
 void dc_account_set_friend_state(dc_account_t a, int state);
 

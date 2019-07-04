@@ -89,26 +89,29 @@ bool ncdc_dispatch_deinit(void)
     return true;
 }
 
+ncdc_commands_t *ncdc_find_cmd(ncdc_commands_t *cmds, wchar_t const *name)
+{
+    ncdc_commands_t *it = NULL;
+
+    for (it = cmds; it->name != NULL; it++) {
+        if (wcscmp(it->name, name) == 0) {
+            return it;
+        }
+    }
+
+    return NULL;
+}
+
 bool ncdc_dispatch(ncdc_mainwindow_t n, wchar_t const *s)
 {
     wchar_t **tokens = NULL;
-    size_t i = 0, tokenlen = 0;
     ncdc_commands_t *it = NULL;
     queue_item *item = NULL;
 
     tokens = w_tokenise(s);
     return_if_true(tokens == NULL, false);
 
-    tokenlen = wcslen(tokens[0]);
-
-    for (i = 0; cmds[i].name != NULL; i++) {
-        if (wcsncmp(cmds[i].name, tokens[0], tokenlen) == 0) {
-            it = cmds+i;
-            break;
-        }
-    }
-
-    if (it == NULL) {
+    if ((it = ncdc_find_cmd(cmds, tokens[0])) == NULL) {
         /* no such command
          */
         LOG(n, L"error: no such command \"%ls\"", tokens[0]);
