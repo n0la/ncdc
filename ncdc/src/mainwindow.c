@@ -186,7 +186,9 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
 {
     wint_t i = 0;
     wchar_t *key = NULL;
+    size_t keylen = 0;
     WINDOW *win = NULL;
+    ncdc_keybinding_t *k = NULL;
 
     switch (n->focus) {
     case FOCUS_INPUT: win = n->input; break;
@@ -203,14 +205,22 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
         return;
     }
 
-    if (i == KEY_ESCAPE &&
-        (key = util_readkey(i, n->input)) == NULL) {
-        return;
+    if (i == KEY_ESCAPE) {
+        if ((key = util_readkey(i, n->input)) == NULL) {
+            return;
+        }
+        keylen = wcslen(key);
     }
 
     FILE *f = fopen("keys.txt", "a+");
-    fwprintf(f, L"%d - %ls\n", i, (key == NULL ? L"n/a" : key));
+    fwprintf(f, L"%d - %ls\n", i, (key == NULL ? L"n/a" : &key[1]));
     fclose(f);
+
+    if (key != NULL &&
+        (k = ncdc_find_keybinding(keys_mainwin, key, keylen)) != NULL) {
+        k->handler(n);
+        return;
+    }
 
     if (n->focus == FOCUS_INPUT) {
         if (key == NULL) {
@@ -270,4 +280,16 @@ void ncdc_mainwindow_log(ncdc_mainwindow_t w, wchar_t const *fmt, ...)
     va_end(lst);
 
     ncdc_textview_append(w->log, buf);
+}
+
+void ncdc_mainwindow_rightview(ncdc_mainwindow_t n)
+{
+    return_if_true(n == NULL,);
+    n->curview = (n->curview + 1) % n->views->len;
+}
+
+void ncdc_mainwindow_leftview(ncdc_mainwindow_t n)
+{
+    return_if_true(n == NULL,);
+    n->curview = (n->curview - 1) % n->views->len;
 }

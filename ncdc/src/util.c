@@ -8,7 +8,7 @@ wchar_t *util_readkey(int e, WINDOW *win)
     return_if_true(e != KEY_ESCAPE, NULL);
 
     esc[0] = e;
-    for (i = 1; i < 7; i++) {
+    for (i = 1; i < 6; i++) {
         if (wget_wch(win, esc+i) == ERR) {
             return NULL;
         }

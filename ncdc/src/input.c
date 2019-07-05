@@ -8,7 +8,7 @@ struct ncdc_input_
 
     GArray *buffer;
     int cursor;
-    ncdc_input_keybinding_t *keys;
+    ncdc_keybinding_t *keys;
 
     ncdc_input_callback_t callback;
     void *callback_arg;
@@ -33,35 +33,20 @@ ncdc_input_t ncdc_input_new(void)
     p->buffer = g_array_new(TRUE, TRUE, sizeof(wchar_t));
     p->cursor = 0;
 
-    p->keys = emacs;
+    p->keys = keys_emacs;
 
     return p;
-}
-
-static ncdc_keybinding_t
-has_binding(ncdc_input_t in, wchar_t const *key, size_t l)
-{
-    size_t i = 0;
-
-    for (; in->keys[i].name != NULL; i++) {
-        if ((l == sizeof(wchar_t) && key[0] == in->keys[i].key[0]) ||
-            wcscmp(key, in->keys[i].key) == 0) {
-            return in->keys[i].handler;
-        }
-    }
-
-    return NULL;
 }
 
 void ncdc_input_feed(ncdc_input_t input, wchar_t const *c, size_t sz)
 {
     return_if_true(input == NULL,);
-    ncdc_keybinding_t handler = NULL;
+    ncdc_keybinding_t *bind = NULL;
 
     if (c[0] == '\r') {
         ncdc_input_enter(input);
-    } else if ((handler = has_binding(input, c, sz)) != NULL) {
-        handler(input);
+    } else if ((bind = ncdc_find_keybinding(input->keys, c, sz)) != NULL) {
+        bind->handler(input);
     } else if (iswprint(c[0])) {
         g_array_insert_vals(input->buffer, input->cursor, &c[0], 1);
         input->cursor += wcswidth(&c[0], 1);

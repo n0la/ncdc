@@ -167,6 +167,7 @@ int main(int ac, char **av)
     }
 
     initscr();
+    cbreak();
     noecho();
     nonl();
     keypad(stdscr, TRUE);
