@@ -182,6 +182,34 @@ static void ncdc_mainwindow_update_focus(ncdc_mainwindow_t n)
     }
 }
 
+static void ncdc_mainwindow_render_status(ncdc_mainwindow_t n)
+{
+    wchar_t *status = NULL;
+    size_t statuslen = 0;
+    wchar_t timestr[100] = {0};
+    time_t tm = time(NULL);
+    struct tm *t = localtime(&tm);
+    FILE *f = open_wmemstream(&status, &statuslen);
+
+    werase(n->sep1);
+    return_if_true(f == NULL,);
+
+    wcsftime(timestr, 99, L"[%H:%M]", t);
+    fwprintf(f, L"%ls", timestr);
+
+    if (current_account == NULL) {
+        fwprintf(f, L" [not logged in]");
+    } else {
+        fwprintf(f, L" [%s]", dc_account_fullname(current_account));
+    }
+
+    fwprintf(f, L" [%d]", n->curview);
+    fclose(f);
+
+    mvwaddwstr(n->sep1, 0, 0, status);
+    free(status);
+}
+
 void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
 {
     wint_t i = 0;
@@ -261,7 +289,9 @@ void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
     wnoutrefresh(n->input);
 
     wbkgd(n->sep1, COLOR_PAIR(1));
+    ncdc_mainwindow_render_status(n);
     wnoutrefresh(n->sep1);
+
     wbkgd(n->sep2, COLOR_PAIR(1));
     wnoutrefresh(n->sep2);
 
