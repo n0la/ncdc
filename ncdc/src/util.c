@@ -1,5 +1,22 @@
 #include <ncdc/ncdc.h>
 
+wchar_t *util_readkey(int e, WINDOW *win)
+{
+    wint_t esc[7] = {0};
+    int i = 0;
+
+    return_if_true(e != KEY_ESCAPE, NULL);
+
+    esc[0] = e;
+    for (i = 1; i < 7; i++) {
+        if (wget_wch(win, esc+i) == ERR) {
+            return NULL;
+        }
+    }
+
+    return wcsdup((wchar_t const *)esc);
+}
+
 wchar_t const *w_next_word(wchar_t const *w, ssize_t len)
 {
     size_t i = 0;

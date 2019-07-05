@@ -1,5 +1,6 @@
 #include <ncdc/input.h>
 #include <ncdc/ncdc.h>
+#include <ncdc/keycodes.h>
 
 struct ncdc_input_
 {
@@ -37,13 +38,14 @@ ncdc_input_t ncdc_input_new(void)
     return p;
 }
 
-static ncdc_keybinding_t has_binding(ncdc_input_t in, wchar_t key)
+static ncdc_keybinding_t
+has_binding(ncdc_input_t in, wchar_t const *key, size_t l)
 {
-    char const *k = keyname(key);
     size_t i = 0;
 
     for (; in->keys[i].name != NULL; i++) {
-        if (strcmp(k, in->keys[i].key) == 0) {
+        if ((l == sizeof(wchar_t) && key[0] == in->keys[i].key[0]) ||
+            wcscmp(key, in->keys[i].key) == 0) {
             return in->keys[i].handler;
         }
     }
@@ -51,18 +53,18 @@ static ncdc_keybinding_t has_binding(ncdc_input_t in, wchar_t key)
     return NULL;
 }
 
-void ncdc_input_feed(ncdc_input_t input, wchar_t c)
+void ncdc_input_feed(ncdc_input_t input, wchar_t const *c, size_t sz)
 {
     return_if_true(input == NULL,);
     ncdc_keybinding_t handler = NULL;
 
-    if (c == '\r') {
+    if (c[0] == '\r') {
         ncdc_input_enter(input);
-    } else if ((handler = has_binding(input, c)) != NULL) {
+    } else if ((handler = has_binding(input, c, sz)) != NULL) {
         handler(input);
-    } else if (iswprint(c)) {
-        g_array_insert_vals(input->buffer, input->cursor, &c, 1);
-        input->cursor += wcswidth(&c, 1);
+    } else if (iswprint(c[0])) {
+        g_array_insert_vals(input->buffer, input->cursor, &c[0], 1);
+        input->cursor += wcswidth(&c[0], 1);
     }
 }
 

@@ -52,6 +52,10 @@ extern char *ncdc_private_dir;
 extern void *config;
 extern void *mainwindow;
 
+#define KEY_ESCAPE 27
+
+wchar_t *util_readkey(int esc, WINDOW *win);
+
 void exit_main(void);
 
 int strwidth(char const *string);

@@ -184,23 +184,43 @@ static void ncdc_mainwindow_update_focus(ncdc_mainwindow_t n)
 
 void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
 {
+    wint_t i = 0;
+    wchar_t *key = NULL;
+    WINDOW *win = NULL;
+
     switch (n->focus) {
-    case FOCUS_INPUT:
-    {
-        wint_t i = 0;
-
-        if (wget_wch(n->input, &i) == ERR) {
-            return;
-        }
-
-        if (i == KEY_RESIZE) {
-            ncdc_mainwindow_resize(n);
-        } else {
-            ncdc_input_feed(n->in, (wchar_t)i);
-        }
-    } break;
-
+    case FOCUS_INPUT: win = n->input; break;
+    case FOCUS_CHAT: win = n->chat; break;
+    case FOCUS_GUILDS: win = n->guilds; break;
     }
+
+    if (wget_wch(win, &i) == ERR) {
+        return;
+    }
+
+    if (i == KEY_RESIZE) {
+        ncdc_mainwindow_resize(n);
+        return;
+    }
+
+    if (i == KEY_ESCAPE &&
+        (key = util_readkey(i, n->input)) == NULL) {
+        return;
+    }
+
+    FILE *f = fopen("keys.txt", "a+");
+    fwprintf(f, L"%d - %ls\n", i, (key == NULL ? L"n/a" : key));
+    fclose(f);
+
+    if (n->focus == FOCUS_INPUT) {
+        if (key == NULL) {
+            ncdc_input_feed(n->in, (wchar_t const *)&i, sizeof(wchar_t));
+        } else {
+            ncdc_input_feed(n->in, key, wcslen(key));
+        }
+    }
+
+    free(key);
 }
 
 GPtrArray *ncdc_mainwindow_views(ncdc_mainwindow_t n)
