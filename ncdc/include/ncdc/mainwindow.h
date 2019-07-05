@@ -14,6 +14,9 @@ ncdc_mainwindow_t ncdc_mainwindow_new(void);
 #define LOG(n, ...) ncdc_mainwindow_log(n, __VA_ARGS__)
 void ncdc_mainwindow_log(ncdc_mainwindow_t w, wchar_t const *fmt, ...);
 
+GPtrArray *ncdc_mainwindow_views(ncdc_mainwindow_t n);
+void ncdc_mainwindow_switchview(ncdc_mainwindow_t n, int idx);
+
 void ncdc_mainwindow_refresh(ncdc_mainwindow_t n);
 void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n);
 

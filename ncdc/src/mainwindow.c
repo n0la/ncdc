@@ -37,6 +37,9 @@ struct ncdc_mainwindow_
     WINDOW *sep2;
 
     ncdc_input_t in;
+
+    GPtrArray *views;
+    int curview;
     ncdc_textview_t log;
 
     int focus;
@@ -59,7 +62,11 @@ static void ncdc_mainwindow_free(ncdc_mainwindow_t n)
     delwin(n->sep2);
 
     dc_unref(n->in);
-    dc_unref(n->log);
+
+    if (n->views != NULL) {
+        g_ptr_array_unref(n->views);
+        n->views = NULL;
+    }
 
     free(n);
 }
@@ -74,7 +81,11 @@ ncdc_mainwindow_t ncdc_mainwindow_new(void)
     ptr->in = ncdc_input_new();
     ncdc_input_set_callback(ptr->in, ncdc_mainwindow_callback, ptr);
 
+    ptr->views = g_ptr_array_new_with_free_func(
+        (GDestroyNotify)dc_unref
+        );
     ptr->log = ncdc_textview_new();
+    g_ptr_array_add(ptr->views, ptr->log);
 
     ptr->guilds = newwin(5, 5, 1, 1);
     ptr->chat = newwin(5, 5, 4, 4);
@@ -192,11 +203,28 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
     }
 }
 
+GPtrArray *ncdc_mainwindow_views(ncdc_mainwindow_t n)
+{
+    return n->views;
+}
+
+void ncdc_mainwindow_switchview(ncdc_mainwindow_t n, int idx)
+{
+    return_if_true(n == NULL || n->views == NULL,);
+    return_if_true(idx >= n->views->len,);
+    n->curview = idx;
+}
+
 void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
 {
+    ncdc_textview_t v = 0;
+
     wnoutrefresh(n->guilds);
 
-    ncdc_textview_render(n->log, n->chat, n->chat_h, n->chat_w);
+    /* render active text view
+     */
+    v = g_ptr_array_index(n->views, n->curview);
+    ncdc_textview_render(v, n->chat, n->chat_h, n->chat_w);
     wnoutrefresh(n->chat);
 
     ncdc_input_draw(n->in, n->input);

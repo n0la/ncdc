@@ -225,3 +225,16 @@ void dc_channel_set_type(dc_channel_t c, dc_channel_type_t t)
     return_if_true(c == NULL,);
     c->type = t;
 }
+
+size_t dc_channel_recipients(dc_channel_t c)
+{
+    return_if_true(c == NULL || c->recipients == NULL, 0);
+    return c->recipients->len;
+}
+
+dc_account_t dc_channel_nthrecipient(dc_channel_t c, size_t i)
+{
+    return_if_true(c == NULL || c->recipients == NULL, NULL);
+    return_if_true(i >= c->recipients->len, NULL);
+    return g_ptr_array_index(c->recipients, i);
+}

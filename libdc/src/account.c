@@ -282,6 +282,13 @@ char const *dc_account_fullname(dc_account_t a)
     return a->full;
 }
 
+bool dc_account_equal(dc_account_t a, dc_account_t b)
+{
+    return_if_true(a == NULL && b == NULL, true);
+    return_if_true(a == NULL || b == NULL, false);
+    return (strcmp(a->full, b->full) == 0);
+}
+
 void dc_account_set_friends(dc_account_t a, dc_account_t *friends, size_t len)
 {
     size_t i = 0;
@@ -291,6 +298,21 @@ void dc_account_set_friends(dc_account_t a, dc_account_t *friends, size_t len)
     for (i = 0; i < len; i++) {
         g_ptr_array_add(a->friends, friends[i]);
     }
+}
+
+dc_account_t dc_account_findfriend(dc_account_t a, char const *fullname)
+{
+    size_t i = 0;
+    return_if_true(a == NULL || fullname == NULL, NULL);
+
+    for (i = 0; i < a->friends->len; i++) {
+        dc_account_t f = g_ptr_array_index(a->friends, i);
+        if (strcmp(f->full, fullname) == 0) {
+            return f;
+        }
+    }
+
+    return NULL;
 }
 
 dc_account_t dc_account_nthfriend(dc_account_t a, size_t i)

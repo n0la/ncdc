@@ -20,6 +20,7 @@ SET(SOURCES
   "src/input.c"
   "src/login.c"
   "src/mainwindow.c"
+  "src/msg.c"
   "src/ncdc.c"
   "src/textview.c"
   "src/util.c"

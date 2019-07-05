@@ -4,14 +4,24 @@
 struct ncdc_textview_
 {
     dc_refable_t ref;
+
     GPtrArray *par;
+
+    dc_account_t account;
+    dc_channel_t channel;
 };
 
 static void ncdc_textview_free(ncdc_textview_t v)
 {
     return_if_true(v == NULL,);
 
-    g_ptr_array_unref(v->par);
+    dc_unref(v->account);
+    dc_unref(v->channel);
+
+    if (v->par != NULL) {
+        g_ptr_array_unref(v->par);
+    }
+
     free(v);
 }
 
@@ -29,6 +39,32 @@ ncdc_textview_t ncdc_textview_new(void)
     }
 
     return p;
+}
+
+dc_account_t ncdc_textview_account(ncdc_textview_t v)
+{
+    return_if_true(v == NULL, NULL);
+    return v->account;
+}
+
+void ncdc_textview_set_account(ncdc_textview_t v, dc_account_t a)
+{
+    return_if_true(v == NULL || a == NULL,);
+    dc_unref(v->account);
+    v->account = dc_ref(a);
+}
+
+dc_channel_t ncdc_textview_channel(ncdc_textview_t v)
+{
+    return_if_true(v == NULL, NULL);
+    return v->channel;
+}
+
+void ncdc_textview_set_channel(ncdc_textview_t v, dc_channel_t a)
+{
+    return_if_true(v == NULL || a == NULL,);
+    dc_unref(v->channel);
+    v->channel = dc_ref(a);
 }
 
 void ncdc_textview_append(ncdc_textview_t v, wchar_t const *w)

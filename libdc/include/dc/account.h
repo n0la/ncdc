@@ -69,11 +69,16 @@ void dc_account_set_token(dc_account_t a, char const *token);
 char const *dc_account_token(dc_account_t a);
 bool dc_account_has_token(dc_account_t a);
 
+/* compare
+ */
+bool dc_account_equal(dc_account_t a, dc_account_t b);
+
 /* relationships
  */
 void dc_account_set_friends(dc_account_t a, dc_account_t *ptr, size_t len);
 dc_account_t dc_account_nthfriend(dc_account_t a, size_t i);
 size_t dc_account_friends_size(dc_account_t a);
+dc_account_t dc_account_findfriend(dc_account_t a, char const *fullname);
 
 int dc_account_friend_state(dc_account_t a);
 void dc_account_set_friend_state(dc_account_t a, int state);

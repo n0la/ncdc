@@ -18,7 +18,7 @@ bool dc_api_create_channel(dc_api_t api, dc_account_t login,
     goto_if_true(url == NULL, cleanup);
 
     /* build a JSON object that contains one array called "recipients":
-     * {"recipients": ["snowflake#1", "snowflake#N"]}
+     * {"recipients": ["snowflake#1", ..., "snowflake#N"]}
      */
     data = json_object();
     array = json_array();
@@ -42,6 +42,7 @@ bool dc_api_create_channel(dc_api_t api, dc_account_t login,
     goto_if_true(c == NULL, cleanup);
 
     *channel = c;
+    ret = true;
 
 cleanup:
 

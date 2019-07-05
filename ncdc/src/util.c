@@ -118,6 +118,26 @@ wchar_t **w_tokenise(wchar_t const *str)
     return (wchar_t**)g_ptr_array_free(array, FALSE);
 }
 
+wchar_t *w_joinv(wchar_t const **v, size_t len)
+{
+    wchar_t *buf = NULL;
+    size_t buflen = 0;
+    FILE *f = open_wmemstream(&buf, &buflen);
+    size_t i = 0;
+
+    return_if_true(f == NULL, NULL);
+
+    for (i = 0; i < len; i++) {
+        fwprintf(f, L"%ls", v[i]);
+        if (i < (len-1)) {
+            fputwc(' ', f);
+        }
+    }
+
+    fclose(f);
+    return buf;
+}
+
 char *w_convert(wchar_t const *w)
 {
     size_t sz = 0;
