@@ -4,6 +4,7 @@
 #include <dc/apisync.h>
 #include <dc/account.h>
 #include <dc/guild.h>
+#include <dc/channel.h>
 
 #include <stdbool.h>
 
@@ -58,6 +59,16 @@ bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
  */
 bool dc_api_get_userguilds(dc_api_t api, dc_account_t login,
                            GPtrArray **guilds);
+
+/**
+ * Create a 1:1 or 1:N DM channel with the given recipients. The recipients must
+ * have their ID (snowflake) set. Returns the new channel, complete with ID, and
+ * all in "channel". Note that the "login" user is automatically added to the DM
+ * session, so it is not needed to add him to recipients.
+ */
+bool dc_api_create_channel(dc_api_t api, dc_account_t login,
+                           dc_account_t *recipients, size_t nrecp,
+                           dc_channel_t *channel);
 
 /**
  * Fetch a list of friends of the login account "login". The friends are stored
