@@ -5,7 +5,6 @@
 #define DISCORD_URL "https://discordapp.com/api/v6"
 
 #define DISCORD_USERAGENT "Mozilla/5.0 (X11; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0"
-#define DISCORD_API_AUTH "auth/login"
 
 struct dc_api_
 {
@@ -292,7 +291,7 @@ bool dc_api_authenticate(dc_api_t api, dc_account_t account)
                         json_string(dc_account_password(account))
         );
 
-    reply = dc_api_call_sync(api, "POST", NULL, DISCORD_API_AUTH, j);
+    reply = dc_api_call_sync(api, "POST", NULL, "auth/login", j);
     goto_if_true(reply == NULL, cleanup);
 
     if (dc_api_error(j, NULL, NULL)) {
