@@ -160,7 +160,7 @@ dc_loop_t dc_loop_new_full(struct event_base *base, CURLM *multi)
     curl_multi_setopt(ptr->multi, CURLMOPT_TIMERDATA, ptr);
     curl_multi_setopt(ptr->multi, CURLMOPT_TIMERFUNCTION, mcurl_timer);
 
-    return ptr;
+    return dc_ref(ptr);
 
 fail:
 

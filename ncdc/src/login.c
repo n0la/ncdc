@@ -21,7 +21,7 @@ bool ncdc_cmd_login(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
             goto cleanup;
         }
 
-        g_hash_table_insert(accounts, arg, acc);
+        g_hash_table_insert(accounts, strdup(arg), acc);
     } else {
         if (dc_account_has_token(acc)) {
             LOG(n, L"login: %ls: this account is already logged in", av[1]);

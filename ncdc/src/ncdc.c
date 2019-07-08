@@ -17,6 +17,7 @@ ncdc_mainwindow_t mainwin = NULL;
 /* we loop in a different thread
  */
 bool main_done = false;
+bool thread_done = false;
 static pthread_t event_thread;
 static struct event_base *base = NULL;
 
@@ -34,11 +35,28 @@ dc_loop_t loop = NULL;
  */
 dc_api_t api = NULL;
 
+static void cleanup_account(dc_account_t a)
+{
+    if (dc_account_has_token(a)) {
+        dc_api_logout(api, a);
+    }
+
+    dc_unref(a);
+}
+
 static void cleanup(void)
 {
     endwin();
 
-    main_done = true;
+    if (accounts != NULL) {
+        g_hash_table_unref(accounts);
+        accounts = NULL;
+    }
+
+    dc_unref(current_account);
+    current_account = NULL;
+
+    thread_done = true;
     dc_loop_abort(loop);
     pthread_join(event_thread, NULL);
 
@@ -52,11 +70,6 @@ static void cleanup(void)
     event_base_free(base);
     base = NULL;
 
-    if (accounts != NULL) {
-        g_hash_table_unref(accounts);
-        accounts = NULL;
-    }
-
     dc_unref(api);
     dc_unref(loop);
 
@@ -66,7 +79,7 @@ static void cleanup(void)
 
 static void sighandler(int sig)
 {
-    cleanup();
+    exit_main();
     exit(3);
 }
 
@@ -79,7 +92,7 @@ static void stdin_handler(int sock, short what, void *data)
 
 static void *looper(void *arg)
 {
-    while (!main_done) {
+    while (!thread_done) {
         if (!dc_loop_once(loop)) {
             break;
         }
@@ -126,7 +139,7 @@ static bool init_everything(void)
     return_if_true(config == NULL, false);
 
     accounts = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                     g_free, dc_unref
+                                     g_free, (GDestroyNotify)cleanup_account
         );
     return_if_true(accounts == NULL, false);
 

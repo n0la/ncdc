@@ -30,8 +30,18 @@ static void dc_api_sync_free(dc_api_sync_t s)
     pthread_cond_destroy(&s->cnd);
     pthread_mutex_destroy(&s->mtx);
 
-    curl_multi_remove_handle(s->curl, s->easy);
-    curl_easy_cleanup(s->easy);
+    if (s->list != NULL) {
+        curl_slist_free_all(s->list);
+        s->list = NULL;
+    }
+
+    if (s->easy != NULL) {
+        if (s->curl != NULL) {
+            curl_multi_remove_handle(s->curl, s->easy);
+        }
+        curl_easy_cleanup(s->easy);
+        s->easy = NULL;
+    }
 
     if (s->stream != NULL) {
         fclose(s->stream);
@@ -41,9 +51,6 @@ static void dc_api_sync_free(dc_api_sync_t s)
     free(s->buffer);
     s->buffer = NULL;
     s->bufferlen = 0;
-
-    curl_slist_free_all(s->list);
-    s->list = NULL;
 
     free(s);
 }

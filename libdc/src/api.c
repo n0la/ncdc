@@ -114,7 +114,6 @@ dc_api_do(dc_api_t api, char const *verb,
     dc_api_sync_t sync = NULL;
     struct curl_slist *l = NULL;
     char *tmp = NULL;
-    int ptr = 0;
 
     c = curl_easy_init();
     goto_if_true(c == NULL, cleanup);
@@ -162,10 +161,10 @@ dc_api_do(dc_api_t api, char const *verb,
     }
 
     if (data != NULL) {
-        curl_easy_setopt(c, CURLOPT_COPYPOSTFIELDS, data);
         if (len >= 0) {
             curl_easy_setopt(c, CURLOPT_POSTFIELDSIZE_LARGE, len);
         }
+        curl_easy_setopt(c, CURLOPT_COPYPOSTFIELDS, data);
     }
 
     if (strcmp(verb, "PUT") == 0 ||
@@ -178,8 +177,6 @@ dc_api_do(dc_api_t api, char const *verb,
     }
 
     g_hash_table_insert(api->syncs, c, dc_ref(sync));
-    curl_multi_socket_action(api->curl, CURL_SOCKET_TIMEOUT, 0, &ptr);
-
     ret = true;
 
 cleanup:
