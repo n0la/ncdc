@@ -53,7 +53,9 @@ bool dc_api_get_friends(dc_api_t api, dc_account_t login)
 
 cleanup:
 
-    g_ptr_array_free(f, FALSE);
+    if (f != NULL) {
+        g_ptr_array_unref(f);
+    }
     json_decref(reply);
     reply = NULL;
 

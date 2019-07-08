@@ -296,7 +296,7 @@ void dc_account_set_friends(dc_account_t a, dc_account_t *friends, size_t len)
 
     g_ptr_array_remove_range(a->friends, 0, a->friends->len);
     for (i = 0; i < len; i++) {
-        g_ptr_array_add(a->friends, friends[i]);
+        g_ptr_array_add(a->friends, dc_ref(friends[i]));
     }
 }
 
