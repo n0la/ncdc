@@ -18,6 +18,7 @@ SET(SOURCES
   "include/dc/util.h"
   "src/account.c"
   "src/api.c"
+  "src/api-auth.c"
   "src/api-channel.c"
   "src/api-friends.c"
   "src/apisync.c"

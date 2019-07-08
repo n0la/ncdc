@@ -27,6 +27,7 @@ void dc_api_signal(dc_api_t api, CURL *easy, int code);
 
 /* internal curl stuff
  */
+bool dc_api_error(json_t *j, int *code, char const **message);
 dc_api_sync_t dc_api_call(dc_api_t api, char const *token,
                           char const *verb, char const *method,
                           json_t *j);
@@ -42,6 +43,12 @@ json_t *dc_api_call_sync(dc_api_t api, char const *token,
  * authentication.
  */
 bool dc_api_authenticate(dc_api_t api, dc_account_t account);
+
+/**
+ * Inverse of dc_api_authenticate(). Logs the given user out, destroying the
+ * login token in the process.
+ */
+bool dc_api_logout(dc_api_t api, dc_account_t account);
 
 /**
  * Retrieve basic user information for the given account. The first

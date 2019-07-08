@@ -4,6 +4,7 @@ ncdc_commands_t cmds[] = {
     { L"/friend",  ncdc_cmd_friends },
     { L"/friends", ncdc_cmd_friends },
     { L"/login",   ncdc_cmd_login },
+    { L"/logout",  ncdc_cmd_logout },
     { L"/msg",     ncdc_cmd_msg },
     { L"/quit",    ncdc_cmd_quit },
     { NULL, NULL }

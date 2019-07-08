@@ -19,6 +19,7 @@ SET(SOURCES
   "src/input.c"
   "src/keycodes.c"
   "src/login.c"
+  "src/logout.c"
   "src/mainwindow.c"
   "src/msg.c"
   "src/ncdc.c"

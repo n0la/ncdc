@@ -253,7 +253,7 @@ cleanup:
     return reply;
 }
 
-static bool dc_api_error(json_t *j, int *code, char const **message)
+bool dc_api_error(json_t *j, int *code, char const **message)
 {
     return_if_true(j == NULL, false);
 
@@ -277,48 +277,6 @@ static bool dc_api_error(json_t *j, int *code, char const **message)
     }
 
     return error;
-}
-
-bool dc_api_authenticate(dc_api_t api, dc_account_t account)
-{
-    json_t *j = json_object(), *reply = NULL, *token = NULL;
-    bool ret = false;
-
-    json_object_set_new(j, "email",
-                        json_string(dc_account_email(account))
-        );
-    json_object_set_new(j, "password",
-                        json_string(dc_account_password(account))
-        );
-
-    reply = dc_api_call_sync(api, "POST", NULL, "auth/login", j);
-    goto_if_true(reply == NULL, cleanup);
-
-    if (dc_api_error(j, NULL, NULL)) {
-        return false;
-    }
-
-    token = json_object_get(reply, "token");
-    if (token == NULL || !json_is_string(token)) {
-        goto cleanup;
-    }
-
-    dc_account_set_token(account, json_string_value(token));
-    ret = true;
-
-cleanup:
-
-    if (j != NULL) {
-        json_decref(j);
-        j = NULL;
-    }
-
-    if (reply != NULL) {
-        json_decref(reply);
-        reply = NULL;
-    }
-
-    return ret;
 }
 
 bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
