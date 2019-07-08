@@ -85,6 +85,7 @@ ncdc_mainwindow_t ncdc_mainwindow_new(void)
         (GDestroyNotify)dc_unref
         );
     ptr->log = ncdc_textview_new();
+    ncdc_textview_set_title(ptr->log, L"status");
     g_ptr_array_add(ptr->views, ptr->log);
 
     ptr->guilds = newwin(5, 5, 1, 1);
@@ -190,6 +191,8 @@ static void ncdc_mainwindow_render_status(ncdc_mainwindow_t n)
     time_t tm = time(NULL);
     struct tm *t = localtime(&tm);
     FILE *f = open_wmemstream(&status, &statuslen);
+    wchar_t const *wintitle = NULL;
+    ncdc_textview_t view = NULL;
 
     werase(n->sep1);
     return_if_true(f == NULL,);
@@ -203,7 +206,11 @@ static void ncdc_mainwindow_render_status(ncdc_mainwindow_t n)
         fwprintf(f, L" [%s]", dc_account_fullname(current_account));
     }
 
-    fwprintf(f, L" [%d]", n->curview);
+    view = g_ptr_array_index(n->views, n->curview);
+    wintitle = ncdc_textview_title(view);
+    fwprintf(f, L" [%d: %ls]", n->curview,
+             (wintitle != NULL ? wintitle : L"n/a")
+        );
     fclose(f);
 
     mvwaddwstr(n->sep1, 0, 0, status);

@@ -6,6 +6,7 @@ struct ncdc_textview_
     dc_refable_t ref;
 
     GPtrArray *par;
+    wchar_t *title;
 
     dc_account_t account;
     dc_channel_t channel;
@@ -14,6 +15,9 @@ struct ncdc_textview_
 static void ncdc_textview_free(ncdc_textview_t v)
 {
     return_if_true(v == NULL,);
+
+    free(v->title);
+    v->title = NULL;
 
     dc_unref(v->account);
     dc_unref(v->channel);
@@ -38,7 +42,44 @@ ncdc_textview_t ncdc_textview_new(void)
         return NULL;
     }
 
-    return p;
+    return dc_ref(p);
+}
+
+static void ncdc_textview_maketitle(ncdc_textview_t v)
+{
+    size_t i = 0;
+    wchar_t *buf = NULL;
+    size_t buflen = 0;
+    FILE *f = open_wmemstream(&buf, &buflen);
+    size_t rlen = dc_channel_recipients(v->channel);
+
+    for (i = 0; i < rlen; i++) {
+        dc_account_t r = dc_channel_nthrecipient(v->channel, i);
+        fwprintf(f, L"%s", dc_account_fullname(r));
+        if (i < (rlen-1)) {
+            fwprintf(f, L",");
+        }
+    }
+
+    fclose(f);
+
+    free(v->title);
+    v->title = buf;
+}
+
+wchar_t const *ncdc_textview_title(ncdc_textview_t v)
+{
+    if (v->title == NULL && v->channel != NULL) {
+        ncdc_textview_maketitle(v);
+    }
+
+    return v->title;
+}
+
+void ncdc_textview_set_title(ncdc_textview_t v, wchar_t const *w)
+{
+    free(v->title);
+    v->title = wcsdup(w);
 }
 
 dc_account_t ncdc_textview_account(ncdc_textview_t v)
@@ -98,7 +139,7 @@ void ncdc_textview_render(ncdc_textview_t v, WINDOW *win, int lines, int cols)
 
     werase(win);
 
-    if (v->par->len == 0) {
+    if (v->par == NULL || v->par->len == 0) {
         return;
     }
 
