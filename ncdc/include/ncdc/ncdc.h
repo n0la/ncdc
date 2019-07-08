@@ -58,6 +58,8 @@ wchar_t *util_readkey(int esc, WINDOW *win);
 
 void exit_main(void);
 
+wchar_t *s_convert(char const *s);
+
 int strwidth(char const *string);
 char *read_char(FILE *stream);
 

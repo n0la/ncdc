@@ -78,6 +78,11 @@ bool dc_api_create_channel(dc_api_t api, dc_account_t login,
                            dc_channel_t *channel);
 
 /**
+ * Fetch 50 messages for the given channel.
+ */
+bool dc_api_get_messages(dc_api_t api, dc_account_t login, dc_channel_t c);
+
+/**
  * Fetch a list of friends of the login account "login". The friends are stored
  * within the login object.
  */

@@ -133,15 +133,10 @@ wchar_t const *ncdc_textview_nthline(ncdc_textview_t v, size_t idx)
     return g_ptr_array_index(v->par, idx);
 }
 
-void ncdc_textview_render(ncdc_textview_t v, WINDOW *win, int lines, int cols)
+static void
+ncdc_textview_render_par(ncdc_textview_t v, WINDOW *win, int lines, int cols)
 {
     ssize_t i = 0, needed_lines = 0, atline = 0;
-
-    werase(win);
-
-    if (v->par == NULL || v->par->len == 0) {
-        return;
-    }
 
     for (i = v->par->len-1; i >= 0; i--) {
         wchar_t const *w = ncdc_textview_nthline(v, i);
@@ -157,5 +152,94 @@ void ncdc_textview_render(ncdc_textview_t v, WINDOW *win, int lines, int cols)
         if (needed_lines >= lines) {
             break;
         }
+    }
+}
+
+static wchar_t *ncdc_textview_format(dc_message_t m)
+{
+    wchar_t *c = NULL, *author = NULL, *message = NULL;
+    size_t clen = 0;
+    FILE *f = open_wmemstream(&c, &clen);
+    wchar_t *ret = NULL;
+    dc_account_t a = dc_message_author(m);
+
+    return_if_true(f == NULL, NULL);
+
+    author = s_convert(dc_account_fullname(a));
+    goto_if_true(author == NULL, cleanup);
+
+    message = s_convert(dc_message_content(m));
+    goto_if_true(message == NULL, cleanup);
+
+    fwprintf(f, L"< %ls> %ls", author, message);
+
+    fclose(f);
+    f = NULL;
+
+    ret = c;
+    c = NULL;
+
+cleanup:
+
+    if (f != NULL) {
+        fclose(f);
+    }
+
+    free(author);
+    free(message);
+    free(c);
+
+    return ret;
+}
+
+static void
+ncdc_textview_render_msgs(ncdc_textview_t v, WINDOW *win, int lines, int cols)
+{
+    ssize_t i = 0, atline = 0, msgs = 0;
+
+    msgs = dc_channel_messages(v->channel);
+    atline = lines;
+
+    for (i = msgs-1; i >= 0; i--) {
+        dc_message_t m = dc_channel_nthmessage(v->channel, i);
+        wchar_t *s = ncdc_textview_format(m);
+        wchar_t const *end = s, *last = NULL;
+        size_t len = 0;
+        size_t needed_lines = 0;
+
+        /* count each line, and, see if it is longer than COLS
+         */
+        while ((end = wcschr(end, '\n')) != NULL) {
+            ++needed_lines;
+
+            len = wcswidth(last, (end - last));
+            needed_lines += (len % cols);
+            last = end;
+        }
+
+        if (last == NULL) {
+            last = s;
+        }
+
+        len = wcswidth(last, wcslen(last));
+        needed_lines += (len / cols) + 1;
+
+        if ((atline - needed_lines) >= 0) {
+            atline -= needed_lines;
+            mvwaddwstr(win, atline, 0, s);
+        }
+
+        free(s);
+    }
+}
+
+void ncdc_textview_render(ncdc_textview_t v, WINDOW *win, int lines, int cols)
+{
+    werase(win);
+
+    if (v->par != NULL && v->par->len > 0) {
+        ncdc_textview_render_par(v, win, lines, cols);
+    } else if (v->channel != NULL) {
+        ncdc_textview_render_msgs(v, win, lines, cols);
     }
 }

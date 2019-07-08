@@ -14,6 +14,7 @@ SET(SOURCES
   "include/dc/channel.h"
   "include/dc/guild.h"
   "include/dc/loop.h"
+  "include/dc/message.h"
   "include/dc/refable.h"
   "include/dc/util.h"
   "src/account.c"
@@ -25,6 +26,7 @@ SET(SOURCES
   "src/channel.c"
   "src/guild.c"
   "src/loop.c"
+  "src/message.c"
   "src/refable.c"
   "src/util.c"
   )

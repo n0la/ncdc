@@ -5,6 +5,7 @@
 #include <jansson.h>
 
 #include <dc/account.h>
+#include <dc/message.h>
 
 /**
  * A discord channel. Exactly what it says on the tin. A place where one
@@ -49,10 +50,16 @@ typedef struct dc_channel_ *dc_channel_t;
 dc_channel_t dc_channel_new(void);
 dc_channel_t dc_channel_from_json(json_t *j);
 
+char const *dc_channel_id(dc_channel_t c);
+
 dc_channel_type_t dc_channel_type(dc_channel_t c);
 void dc_channel_set_type(dc_channel_t c, dc_channel_type_t t);
 
 size_t dc_channel_recipients(dc_channel_t c);
 dc_account_t dc_channel_nthrecipient(dc_channel_t c, size_t i);
+
+size_t dc_channel_messages(dc_channel_t c);
+dc_message_t dc_channel_nthmessage(dc_channel_t c, size_t i);
+void dc_channel_addmessages(dc_channel_t c, dc_message_t *m, size_t s);
 
 #endif

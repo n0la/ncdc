@@ -48,9 +48,13 @@ bool ncdc_cmd_msg(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
     if (c == NULL) {
         /* no? create a new window and switch to it
          */
-
         if (!dc_api_create_channel(api, current_account, &f, 1, &c)) {
             LOG(n, L"msg: failed to create channel");
+            goto cleanup;
+        }
+
+        if (!dc_api_get_messages(api, current_account, c)) {
+            LOG(n, L"msg: failed to fetch messages in channel");
             goto cleanup;
         }
 

@@ -168,3 +168,17 @@ char *w_convert(wchar_t const *w)
     wcstombs(ptr, w, sz);
     return ptr;
 }
+
+wchar_t *s_convert(char const *w)
+{
+    size_t sz = 0;
+    wchar_t *ptr = NULL;
+
+    sz = mbstowcs(NULL, w, 0);
+
+    ptr = calloc(sz+1, sizeof(wchar_t));
+    return_if_true(ptr == NULL, NULL);
+
+    mbstowcs(ptr, w, sz);
+    return ptr;
+}

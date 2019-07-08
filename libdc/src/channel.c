@@ -43,6 +43,8 @@ struct dc_channel_
     /*  application ID of the group DM creator if it is bot-created
      */
     char *application_id;
+
+    GPtrArray *messages;
 };
 
 static void dc_channel_free(dc_channel_t c)
@@ -62,6 +64,11 @@ static void dc_channel_free(dc_channel_t c)
         c->recipients = NULL;
     }
 
+    if (c->messages != NULL) {
+        g_ptr_array_unref(c->messages);
+        c->messages = NULL;
+    }
+
     free(c);
 }
 
@@ -73,6 +80,10 @@ dc_channel_t dc_channel_new(void)
     c->ref.cleanup = (dc_cleanup_t)dc_channel_free;
 
     c->recipients = g_ptr_array_new_with_free_func(
+        (GDestroyNotify)dc_unref
+        );
+
+    c->messages = g_ptr_array_new_with_free_func(
         (GDestroyNotify)dc_unref
         );
 
@@ -214,6 +225,12 @@ json_t *dc_channel_to_json(dc_channel_t c)
     return j;
 }
 
+char const *dc_channel_id(dc_channel_t c)
+{
+    return_if_true(c == NULL, NULL);
+    return c->id;
+}
+
 dc_channel_type_t dc_channel_type(dc_channel_t c)
 {
     return_if_true(c == NULL, -1);
@@ -237,4 +254,31 @@ dc_account_t dc_channel_nthrecipient(dc_channel_t c, size_t i)
     return_if_true(c == NULL || c->recipients == NULL, NULL);
     return_if_true(i >= c->recipients->len, NULL);
     return g_ptr_array_index(c->recipients, i);
+}
+
+size_t dc_channel_messages(dc_channel_t c)
+{
+    return_if_true(c == NULL || c->messages == NULL, 0);
+    return c->messages->len;
+}
+
+dc_message_t dc_channel_nthmessage(dc_channel_t c, size_t i)
+{
+    return_if_true(c == NULL || c->messages == NULL, NULL);
+    return_if_true(i >= c->messages->len, NULL);
+    return g_ptr_array_index(c->messages, i);
+}
+
+void dc_channel_addmessages(dc_channel_t c, dc_message_t *m, size_t s)
+{
+    return_if_true(c == NULL || c->messages == NULL,);
+    return_if_true(m == NULL || s == 0,);
+
+    size_t i = 0;
+
+    for (i = 0; i < s; i++) {
+        g_ptr_array_add(c->messages, dc_ref(m[i]));
+    }
+
+    g_ptr_array_sort(c->messages, (GCompareFunc)dc_message_compare);
 }
