@@ -47,6 +47,7 @@ extern GHashTable *accounts;
 extern dc_account_t current_account;
 
 extern dc_api_t api;
+extern dc_loop_t loop;
 
 extern char *ncdc_private_dir;
 extern void *config;

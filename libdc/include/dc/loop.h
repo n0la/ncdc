@@ -2,6 +2,7 @@
 #define DC_LOOP_H
 
 #include <dc/api.h>
+#include <dc/gateway.h>
 
 #include <event.h>
 #include <curl/curl.h>
@@ -38,6 +39,11 @@ struct event_base *dc_loop_event_base(dc_loop_t l);
  * Add an API handle that this loop should feed.
  */
 void dc_loop_add_api(dc_loop_t loop, dc_api_t api);
+
+/**
+ * Add a gateway to be handled with the rest.
+ */
+void dc_loop_add_gateway(dc_loop_t loop, dc_gateway_t gw);
 
 /**
  * Loop once, and process one message in the queues of the event

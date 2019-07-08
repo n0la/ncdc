@@ -5,6 +5,7 @@
 #include <dc/account.h>
 #include <dc/guild.h>
 #include <dc/channel.h>
+#include <dc/gateway.h>
 
 #include <stdbool.h>
 
@@ -36,6 +37,11 @@ json_t *dc_api_call_sync(dc_api_t api, char const *token,
                          json_t *j);
 
 /**
+ * Establish a GATEWAY to the discord servers.
+ */
+dc_gateway_t dc_api_establish_gateway(dc_api_t api, dc_account_t login);
+
+/**
  * Authenticate a given user account. The user account should have
  * email, and password set. If the auth succeeds the account will have
  * a login token, and will from now on be the "login account". You
@@ -43,6 +49,13 @@ json_t *dc_api_call_sync(dc_api_t api, char const *token,
  * authentication.
  */
 bool dc_api_authenticate(dc_api_t api, dc_account_t account);
+
+/**
+ * Log the account in. Will first call dc_api_authenticate(), then
+ * dc_api_get_userinfo(), then dc_api_get_friends(). If
+ * any of these steps fail, it returns false.
+ */
+bool dc_api_login(dc_api_t api, dc_account_t account);
 
 /**
  * Inverse of dc_api_authenticate(). Logs the given user out, destroying the

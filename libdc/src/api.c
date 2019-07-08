@@ -2,7 +2,8 @@
 #include <dc/refable.h>
 #include "internal.h"
 
-#define DISCORD_URL "https://discordapp.com/api/v6"
+#define DISCORD_URL     "https://discordapp.com/api/v6"
+#define DISCORD_GATEWAY "https://gateway.discord.gg/?encoding=json&v=6"
 
 #define DISCORD_USERAGENT "Mozilla/5.0 (X11; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0"
 
@@ -276,93 +277,88 @@ bool dc_api_error(json_t *j, int *code, char const **message)
     return error;
 }
 
-bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
-                         dc_account_t user)
+static size_t stall_connection(char *buffer, size_t size, size_t nitems,
+                               void *userdata)
 {
-    char *url = NULL;
-    json_t *reply = NULL, *val = NULL;
-    bool ret = false;
+    CURL *easy = (CURL *)userdata;
 
-    return_if_true(api == NULL, false);
-    return_if_true(login == NULL, false);
-    return_if_true(user == NULL, false);
-
-    if (user == login) {
-        url = strdup("users/@me");
-    } else {
-        asprintf(&url, "users/%s", dc_account_id(user));
+    if (strncmp(buffer, "\r\n", size) == 0) {
+        curl_easy_setopt(easy, CURLOPT_CONNECT_ONLY, 1);
+        //curl_easy_pause(easy, CURLPAUSE_ALL);
+        curl_easy_setopt(easy, CURLOPT_FORBID_REUSE, 1);
     }
 
-    reply = dc_api_call_sync(api, "GET", dc_account_token(login), url, NULL);
-    goto_if_true(reply == NULL, cleanup);
-
-    val = json_object_get(reply, "username");
-    goto_if_true(val == NULL || !json_is_string(val), cleanup);
-    dc_account_set_username(user, json_string_value(val));
-
-    val = json_object_get(reply, "discriminator");
-    goto_if_true(val == NULL || !json_is_string(val), cleanup);
-    dc_account_set_discriminator(user, json_string_value(val));
-
-    val = json_object_get(reply, "id");
-    goto_if_true(val == NULL || !json_is_string(val), cleanup);
-    dc_account_set_id(user, json_string_value(val));
-
-    ret = true;
-
-cleanup:
-
-    free(url);
-    json_decref(reply);
-
-    return ret;
+    return size * nitems;
 }
 
-bool dc_api_get_userguilds(dc_api_t api, dc_account_t login, GPtrArray **out)
+dc_gateway_t dc_api_establish_gateway(dc_api_t api, dc_account_t login)
 {
-    char const *url = "users/@me/guilds";
-    json_t *reply = NULL, *c = NULL, *val = NULL;
-    size_t i = 0;
-    bool ret = false;
-    GPtrArray *guilds = g_ptr_array_new_with_free_func(
-        (GDestroyNotify)dc_unref
-        );
+    return_if_true(api == NULL, NULL);
+    return_if_true(api->curl == NULL, NULL);
+    return_if_true(login == NULL || !dc_account_has_token(login), NULL);
 
-    return_if_true(api == NULL, false);
-    return_if_true(login == NULL, false);
+    CURL *c = NULL;
+    struct curl_slist *list = NULL;
+    /* BE THE BROKEN OR THE BREAKER
+     */
+    dc_gateway_t gw = NULL;
+    dc_gateway_t ret = NULL;
 
-    reply = dc_api_call_sync(api, "GET", dc_account_token(login), url, NULL);
-    goto_if_true(reply == NULL, cleanup);
+    c = curl_easy_init();
+    goto_if_true(c == NULL, cleanup);
 
-    goto_if_true(!json_is_array(reply), cleanup);
+    gw = dc_gateway_new();
+    goto_if_true(gw == NULL, cleanup);
 
-    json_array_foreach(reply, i, c) {
-        dc_guild_t g = dc_guild_new();
+    curl_easy_setopt(c, CURLOPT_URL, DISCORD_GATEWAY);
 
-        val = json_object_get(c, "id");
-        goto_if_true(val == NULL || !json_is_string(val), cleanup);
-        dc_guild_set_id(g, json_string_value(val));
+    list = dc_gateway_slist(gw);
+    curl_slist_append(list, "Content-Type: application/json");
+    curl_slist_append(list, "Accept: application/json");
+    curl_slist_append(list, "User-Agent: " DISCORD_USERAGENT);
+    curl_slist_append(list, "Pragma: no-cache");
+    curl_slist_append(list, "Cache-Control: no-cache");
+    curl_slist_append(list, "Sec-WebSocket-Key: cbYK1Jm6cpk3Rua");
+    curl_slist_append(list, "Sec-WebSocket-Version: 13");
+    curl_slist_append(list, "Upgrade: websocket");
 
-        val = json_object_get(c, "name");
-        goto_if_true(val == NULL || !json_is_string(val), cleanup);
-        dc_guild_set_name(g, json_string_value(val));
+    curl_easy_setopt(c, CURLOPT_HEADERFUNCTION, stall_connection);
+    curl_easy_setopt(c, CURLOPT_HEADERDATA, c);
 
-        g_ptr_array_add(guilds, g);
+    curl_easy_setopt(c, CURLOPT_HTTPHEADER, list);
+
+    curl_easy_setopt(c, CURLOPT_TCP_KEEPALIVE, 1L);
+    curl_easy_setopt(c, CURLOPT_TCP_KEEPIDLE, 120L);
+    curl_easy_setopt(c, CURLOPT_TCP_KEEPINTVL, 60L);
+
+    curl_easy_setopt(c, CURLOPT_FORBID_REUSE, 1L);
+    curl_easy_setopt(c, CURLOPT_FRESH_CONNECT, 1L);
+
+    curl_easy_setopt(c, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+    curl_easy_setopt(c, CURLOPT_FOLLOWLOCATION, 1L);
+
+    curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, dc_gateway_writefunc);
+    curl_easy_setopt(c, CURLOPT_WRITEDATA, gw);
+
+    dc_gateway_set_login(gw, login);
+    dc_gateway_set_curl(gw, api->curl, c);
+
+    if (curl_multi_add_handle(api->curl, c) != CURLM_OK) {
+        goto cleanup;
     }
 
-    *out = guilds;
-    guilds = NULL;
+    c = NULL;
 
-    ret = true;
+    ret = gw;
+    gw = NULL;
 
 cleanup:
 
-    json_decref(reply);
-
-    if (guilds) {
-        g_ptr_array_unref(guilds);
-        guilds = NULL;
+    if (c != NULL) {
+        curl_easy_cleanup(c);
     }
+
+    dc_unref(gw);
 
     return ret;
 }

@@ -28,6 +28,29 @@ bool dc_api_logout(dc_api_t api, dc_account_t account)
     return true;
 }
 
+bool dc_api_login(dc_api_t api, dc_account_t account)
+{
+    if (!dc_api_authenticate(api, account)) {
+        goto cleanup;
+    }
+
+    if (!dc_api_get_userinfo(api, account, account)) {
+        goto cleanup;
+    }
+
+    if (!dc_api_get_friends(api, account)) {
+        goto cleanup;
+    }
+
+    return true;
+
+cleanup:
+
+    dc_account_set_token(account, NULL);
+
+    return false;
+}
+
 bool dc_api_authenticate(dc_api_t api, dc_account_t account)
 {
     json_t *j = json_object(), *reply = NULL, *token = NULL;
