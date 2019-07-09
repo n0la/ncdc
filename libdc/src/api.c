@@ -2,11 +2,6 @@
 #include <dc/refable.h>
 #include "internal.h"
 
-#define DISCORD_URL     "https://discordapp.com/api/v6"
-#define DISCORD_GATEWAY "https://gateway.discord.gg/?encoding=json&v=6"
-
-#define DISCORD_USERAGENT "Mozilla/5.0 (X11; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0"
-
 struct dc_api_
 {
     dc_refable_t ref;
@@ -79,6 +74,7 @@ void dc_api_signal(dc_api_t api, CURL *easy, int code)
     }
 }
 
+#ifdef DEBUG
 int debug_callback(CURL *handle, curl_infotype type,
                    char *data, size_t size,
                    void *userptr)
@@ -100,6 +96,7 @@ int debug_callback(CURL *handle, curl_infotype type,
 
     return 0;
 }
+#endif
 
 static dc_api_sync_t
 dc_api_do(dc_api_t api, char const *verb,
@@ -235,10 +232,6 @@ json_t *dc_api_call_sync(dc_api_t api, char const *token,
         goto cleanup;
     }
 
-#ifdef DEBUG
-    printf("api_call_sync: %d\n", dc_api_sync_code(s));
-#endif
-
     reply = json_loadb(dc_api_sync_data(s),
                        dc_api_sync_datalen(s),
                        0, NULL
@@ -276,90 +269,4 @@ bool dc_api_error(json_t *j, int *code, char const **message)
     }
 
     return error;
-}
-
-static size_t stall_connection(char *buffer, size_t size, size_t nitems,
-                               void *userdata)
-{
-    CURL *easy = (CURL *)userdata;
-
-    if (strncmp(buffer, "\r\n", size) == 0) {
-        curl_easy_setopt(easy, CURLOPT_CONNECT_ONLY, 1);
-        //curl_easy_pause(easy, CURLPAUSE_ALL);
-        curl_easy_setopt(easy, CURLOPT_FORBID_REUSE, 1);
-    }
-
-    return size * nitems;
-}
-
-dc_gateway_t dc_api_establish_gateway(dc_api_t api, dc_account_t login)
-{
-    return_if_true(api == NULL, NULL);
-    return_if_true(api->curl == NULL, NULL);
-    return_if_true(login == NULL || !dc_account_has_token(login), NULL);
-
-    CURL *c = NULL;
-    struct curl_slist *list = NULL;
-    /* BE THE BROKEN OR THE BREAKER
-     */
-    dc_gateway_t gw = NULL;
-    dc_gateway_t ret = NULL;
-
-    c = curl_easy_init();
-    goto_if_true(c == NULL, cleanup);
-
-    gw = dc_gateway_new();
-    goto_if_true(gw == NULL, cleanup);
-
-    curl_easy_setopt(c, CURLOPT_URL, DISCORD_GATEWAY);
-
-    list = dc_gateway_slist(gw);
-    curl_slist_append(list, "Content-Type: application/json");
-    curl_slist_append(list, "Accept: application/json");
-    curl_slist_append(list, "User-Agent: " DISCORD_USERAGENT);
-    curl_slist_append(list, "Pragma: no-cache");
-    curl_slist_append(list, "Cache-Control: no-cache");
-    curl_slist_append(list, "Sec-WebSocket-Key: cbYK1Jm6cpk3Rua");
-    curl_slist_append(list, "Sec-WebSocket-Version: 13");
-    curl_slist_append(list, "Upgrade: websocket");
-
-    curl_easy_setopt(c, CURLOPT_HEADERFUNCTION, stall_connection);
-    curl_easy_setopt(c, CURLOPT_HEADERDATA, c);
-
-    curl_easy_setopt(c, CURLOPT_HTTPHEADER, list);
-
-    curl_easy_setopt(c, CURLOPT_TCP_KEEPALIVE, 1L);
-    curl_easy_setopt(c, CURLOPT_TCP_KEEPIDLE, 120L);
-    curl_easy_setopt(c, CURLOPT_TCP_KEEPINTVL, 60L);
-
-    curl_easy_setopt(c, CURLOPT_FORBID_REUSE, 1L);
-    curl_easy_setopt(c, CURLOPT_FRESH_CONNECT, 1L);
-
-    curl_easy_setopt(c, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-    curl_easy_setopt(c, CURLOPT_FOLLOWLOCATION, 1L);
-
-    curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, dc_gateway_writefunc);
-    curl_easy_setopt(c, CURLOPT_WRITEDATA, gw);
-
-    dc_gateway_set_login(gw, login);
-    dc_gateway_set_curl(gw, api->curl, c);
-
-    if (curl_multi_add_handle(api->curl, c) != CURLM_OK) {
-        goto cleanup;
-    }
-
-    c = NULL;
-
-    ret = gw;
-    gw = NULL;
-
-cleanup:
-
-    if (c != NULL) {
-        curl_easy_cleanup(c);
-    }
-
-    dc_unref(gw);
-
-    return ret;
 }

@@ -35,12 +35,13 @@ bool ncdc_cmd_login(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
         goto cleanup;
     }
 
-    gw = dc_api_establish_gateway(api, acc);
+    gw = dc_gateway_new();
     if (gw == NULL) {
         LOG(n, L"login: %ls: failed to establish gateway", av[1]);
         goto cleanup;
     }
 
+    dc_gateway_set_login(gw, acc);
     dc_loop_add_gateway(loop, gw);
 
     dc_unref(current_account);

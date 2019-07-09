@@ -29,10 +29,10 @@ SET(SOURCES
   "src/gateway.c"
   "src/guild.c"
   "src/loop.c"
-  "src/masking.c"
   "src/message.c"
   "src/refable.c"
   "src/util.c"
+  "src/ws-frames.c"
   )
 
 INCLUDE_DIRECTORIES("include"

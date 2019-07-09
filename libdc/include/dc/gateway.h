@@ -12,34 +12,36 @@ struct dc_gateway_;
 typedef struct dc_gateway_ *dc_gateway_t;
 
 typedef enum {
-    GATEWAY_OPCODE_HEARTBEAT = 1,
+    GATEWAY_OPCODE_PING = 1,
     GATEWAY_OPCODE_IDENTIFY = 2,
+    GATEWAY_OPCODE_UPDATE = 3,
     GATEWAY_OPCODE_HELLO = 10,
+    GATEWAY_OPCODE_PONG = 11,
 } dc_gateway_opcode_t;
+
+typedef enum {
+    GATEWAY_FRAME_TEXT_DATA = 129,
+    GATEWAY_FRAME_DISCONNECT = 136,
+    GATEWAY_FRAME_PING = 137,
+    GATEWAY_FRAME_PONG = 138,
+} dc_gateway_frames_t;
 
 dc_gateway_t dc_gateway_new(void);
 
 void dc_gateway_set_login(dc_gateway_t gw, dc_account_t login);
 
-/**
- * Set all required CURL handles. The object will delete the easy handle
- * and make sure it is removed from the multi handle upon unref. Do not
- * free the multi handle before you remove the gateway.
- */
-void dc_gateway_set_curl(dc_gateway_t gw, CURLM *multi, CURL *easy);
-
-CURL *dc_gateway_curl(dc_gateway_t gw);
+bool dc_gateway_connect(dc_gateway_t gw);
 
 /**
- * Returns a CURL slist that lasts as long as the handle itself lasts
+ * Cleans up the easy handle, and thus disconnects from the socket handle
+ * immediately. After this call dc_gateway_connected() will return false.
  */
-struct curl_slist * dc_gateway_slist(dc_gateway_t gw);
+void dc_gateway_disconnect(dc_gateway_t gw);
 
 /**
- * To be used as a WRITEFUNCTION for a curl handle. Don't forget to set the
- * gateway handle as a WRITEDATA too, otherwise this will have no effect.
+ * Returns true if the gateway is still connected.
  */
-size_t dc_gateway_writefunc(char *ptr, size_t sz, size_t nmemb, void *data);
+bool dc_gateway_connected(dc_gateway_t gw);
 
 /**
  * Process the queue of data that came from the websocket.
@@ -52,5 +54,9 @@ void dc_gateway_process(dc_gateway_t gw);
 uint8_t *
 dc_gateway_makeframe(uint8_t const *d, size_t data_len,
                      uint8_t type, size_t *outlen);
+
+size_t
+dc_gateway_parseframe(uint8_t const *data, size_t datalen,
+                      uint8_t *type, uint8_t **outdata, size_t *outlen);
 
 #endif

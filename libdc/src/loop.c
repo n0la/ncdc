@@ -18,6 +18,24 @@ struct dc_loop_
     GPtrArray *gateways;
 };
 
+typedef struct {
+    dc_gateway_t gateway;
+    struct event *event;
+} dc_loop_gateway_t;
+
+static void dc_loop_gateway_free(dc_loop_gateway_t *p)
+{
+    return_if_true(p == NULL,);
+
+    if (p->event != NULL) {
+        event_del(p->event);
+        event_free(p->event);
+    }
+
+    dc_unref(p->gateway);
+    free(p);
+}
+
 static void dc_loop_free(dc_loop_t p)
 {
     return_if_true(p == NULL,);
@@ -68,18 +86,6 @@ mcurl_handler(CURL *easy, curl_socket_t s, int what, void *userp, void *socketp)
 {
     struct event *event = (struct event *)socketp;
     dc_loop_t loop = (dc_loop_t)userp;
-
-    for (size_t i = 0; i < loop->gateways->len; i++) {
-        dc_gateway_t gw = g_ptr_array_index(loop->gateways, i);
-
-        if (dc_gateway_curl(gw) == easy) {
-            printf("gateway event: %s: %s%s\n",
-                   (what == CURL_POLL_REMOVE ? "remove" : "add"),
-                   ((what & CURL_POLL_IN) ? "r" : ""),
-                   ((what & CURL_POLL_OUT) ? "w": "")
-                );
-        }
-    }
 
     if (what == CURL_POLL_REMOVE) {
         if (event != NULL) {
@@ -169,7 +175,9 @@ dc_loop_t dc_loop_new_full(struct event_base *base, CURLM *multi)
     ptr->apis = g_ptr_array_new_with_free_func((GDestroyNotify)dc_unref);
     goto_if_true(ptr->apis == NULL, fail);
 
-    ptr->gateways = g_ptr_array_new_with_free_func((GDestroyNotify)dc_unref);
+    ptr->gateways = g_ptr_array_new_with_free_func(
+        (GDestroyNotify)dc_loop_gateway_free
+        );
     goto_if_true(ptr->gateways == NULL, fail);
 
     ptr->timer = evtimer_new(ptr->base, timer_handler, ptr);
@@ -216,7 +224,13 @@ void dc_loop_add_gateway(dc_loop_t l, dc_gateway_t gw)
 {
     return_if_true(l == NULL || gw == NULL,);
 
-    g_ptr_array_add(l->gateways, dc_ref(gw));
+    dc_loop_gateway_t *ptr = calloc(1, sizeof(dc_loop_gateway_t));
+    return_if_true(ptr == NULL,);
+
+    ptr->gateway = dc_ref(gw);
+    ptr->event = NULL;
+
+    g_ptr_array_add(l->gateways, ptr);
 }
 
 void dc_loop_abort(dc_loop_t l)
@@ -254,8 +268,15 @@ bool dc_loop_once(dc_loop_t l)
     }
 
     for (i = 0; i < l->gateways->len; i++) {
-        dc_gateway_t gw = g_ptr_array_index(l->gateways, i);
-        dc_gateway_process(gw);
+        dc_loop_gateway_t *ptr = g_ptr_array_index(l->gateways, i);
+
+        if (!dc_gateway_connected(ptr->gateway)) {
+            if (!dc_gateway_connect(ptr->gateway)) {
+                continue;
+            }
+        }
+
+        dc_gateway_process(ptr->gateway);
     }
 
     return true;

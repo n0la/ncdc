@@ -10,9 +10,7 @@ struct dc_gateway_
     GPtrArray *out;
     GByteArray *buffer;
 
-    CURLM *multi;
     CURL *easy;
-    struct curl_slist *slist;
 
     dc_account_t login;
 
@@ -24,11 +22,6 @@ static void dc_gateway_free(dc_gateway_t g)
 {
     return_if_true(g == NULL,);
 
-    if (g->buffer != NULL) {
-        g_byte_array_unref(g->buffer);
-        g->buffer = NULL;
-    }
-
     if (g->ops != NULL) {
         g_ptr_array_unref(g->ops);
         g->ops = NULL;
@@ -39,15 +32,9 @@ static void dc_gateway_free(dc_gateway_t g)
         g->out = NULL;
     }
 
-    if (g->easy != NULL) {
-        curl_multi_remove_handle(g->multi, g->easy);
-        curl_easy_cleanup(g->easy);
-        g->easy = NULL;
-    }
-
-    if (g->slist != NULL) {
-        curl_slist_free_all(g->slist);
-        g->slist = NULL;
+    if (g->buffer != NULL) {
+        g_byte_array_unref(g->buffer);
+        g->buffer = NULL;
     }
 
     dc_unref(g->login);
@@ -62,17 +49,14 @@ dc_gateway_t dc_gateway_new(void)
 
     g->ref.cleanup = (dc_cleanup_t)dc_gateway_free;
 
-    g->buffer = g_byte_array_new();
-    goto_if_true(g->buffer == NULL, error);
-
     g->ops = g_ptr_array_new_with_free_func((GDestroyNotify)json_decref);
     goto_if_true(g->ops == NULL, error);
 
     g->out = g_ptr_array_new_with_free_func((GDestroyNotify)json_decref);
     goto_if_true(g->out == NULL, error);
 
-    g->slist = curl_slist_append(NULL, "");
-    goto_if_true(g->slist == NULL, error);
+    g->buffer = g_byte_array_new();
+    goto_if_true(g->buffer == NULL, error);
 
     return dc_ref(g);
 
@@ -88,48 +72,76 @@ void dc_gateway_set_login(dc_gateway_t gw, dc_account_t login)
     gw->login = dc_ref(login);
 }
 
-void dc_gateway_set_curl(dc_gateway_t gw, CURLM *multi, CURL *easy)
+bool dc_gateway_connect(dc_gateway_t gw)
 {
-    return_if_true(gw == NULL,);
-    gw->multi = multi;
-    gw->easy = easy;
-}
+    return_if_true(gw == NULL || gw->easy != NULL, true);
 
-CURL *dc_gateway_curl(dc_gateway_t gw)
-{
-    return_if_true(gw == NULL, NULL);
-    return gw->easy;
-}
+    char header[1000] = {0};
+    size_t outlen = 0;
+    int r = 0;
 
-struct curl_slist * dc_gateway_slist(dc_gateway_t gw)
-{
-    return_if_true(gw == NULL, NULL);
-    return gw->slist;
-}
+    gw->easy = curl_easy_init();
+    goto_if_true(gw->easy == NULL, error);
 
-size_t dc_gateway_writefunc(char *ptr, size_t sz, size_t nmemb, void *data)
-{
-    dc_gateway_t g = (dc_gateway_t)data;
-    json_t *j = NULL;
-    size_t i = 0;
+    curl_easy_setopt(gw->easy, CURLOPT_URL, DISCORD_GATEWAY);
+    curl_easy_setopt(gw->easy, CURLOPT_FRESH_CONNECT, 1L);
+    curl_easy_setopt(gw->easy, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+    curl_easy_setopt(gw->easy, CURLOPT_CONNECT_ONLY, 1L);
 
-    FILE *f = fopen("websocket.txt", "a+");
-    fprintf(f, ">> ");
-    fwrite(ptr, sz, nmemb, f);
-    fprintf(f, "\n");
-    fclose(f);
+    goto_if_true(curl_easy_perform(gw->easy) != CURLE_OK, error);
 
-    for (i = 0; *ptr != '{' && i < (sz *nmemb); ptr++, i++)
-        ;
+    snprintf(header, sizeof(header)-1,
+             "GET %s HTTP/1.1\r\n"
+             "Host: %s\r\n"
+             "User-Agent: %s\r\n"
+             "Pragma: no-cache\r\n"
+             "Cache-Control: no-cache\r\n"
+             "Sec-WebSocket-Key: cbYK1Jm6cpk3Rua\r\n"
+             "Sec-WebSocket-Version: 13\r\n"
+             "Upgrade: websocket\r\n"
+             "\r\n",
+             DISCORD_GATEWAY_URL,
+             DISCORD_GATEWAY_HOST,
+             DISCORD_USERAGENT
+        );
 
-    if (i < (sz * nmemb)) {
-        j = json_loadb(ptr, (sz*nmemb) - i, JSON_DISABLE_EOF_CHECK, NULL);
-        if (j != NULL) {
-            g_ptr_array_add(g->ops, j);
+    r = curl_easy_send(gw->easy, header, strlen(header), &outlen);
+    goto_if_true(r != CURLE_OK || outlen != strlen(header), error);
+
+    do {
+        r = curl_easy_recv(gw->easy, header, sizeof(header), &outlen);
+        if (r == CURLE_OK && outlen > 0) {
+            break;
         }
-    }
+        if (r != CURLE_AGAIN) {
+            goto error;
+        }
+    } while (true);
 
-    return sz * nmemb;
+    goto_if_true(strstr(header, "HTTP/1.1 101") == NULL, error);
+
+    return true;
+
+error:
+
+    curl_easy_cleanup(gw->easy);
+    gw->easy = NULL;
+
+    return false;
+}
+
+void dc_gateway_disconnect(dc_gateway_t gw)
+{
+    return_if_true(gw == NULL || gw->easy == NULL,);
+
+    curl_easy_cleanup(gw->easy);
+    gw->easy = NULL;
+}
+
+bool dc_gateway_connected(dc_gateway_t gw)
+{
+    return_if_true(gw == NULL || gw->easy == NULL, false);
+    return true;
 }
 
 static json_t *dc_gateway_answer(dc_gateway_t gw)
@@ -169,8 +181,29 @@ static void dc_gateway_queue(dc_gateway_t gw, int code, json_t *d)
 
 static void dc_gateway_queue_heartbeat(dc_gateway_t gw)
 {
-    dc_gateway_queue(gw, GATEWAY_OPCODE_HEARTBEAT, NULL);
+    dc_gateway_queue(gw, GATEWAY_OPCODE_PING, NULL);
     gw->last_heartbeat = time(NULL);
+}
+
+static void dc_gateway_queue_identify(dc_gateway_t gw)
+{
+    json_t *j = json_object(), *dev = json_object();
+    char const *token = dc_account_token(gw->login);
+
+    if (j == NULL || dev == NULL) {
+        json_decref(j);
+        json_decref(dev);
+        return;
+    }
+
+    json_object_set_new(dev, "$os", json_string("linux"));
+    json_object_set_new(dev, "$browser", json_string("libdc"));
+    json_object_set_new(dev, "$device", json_string("libdc"));
+
+    json_object_set_new(j, "token", json_string(token));
+    json_object_set_new(j, "properties", dev);
+
+    dc_gateway_queue(gw, GATEWAY_OPCODE_IDENTIFY, j);
 }
 
 static bool dc_gateway_handle_hello(dc_gateway_t gw, json_t *d)
@@ -182,11 +215,16 @@ static bool dc_gateway_handle_hello(dc_gateway_t gw, json_t *d)
 
     /* send an identify first
      */
-    dc_gateway_queue(gw, GATEWAY_OPCODE_IDENTIFY, NULL);
+    dc_gateway_queue_identify(gw);
 
     gw->heartbeat_interval = json_integer_value(val);
     dc_gateway_queue_heartbeat(gw);
 
+    return true;
+}
+
+static bool dc_gateway_handle_update(dc_gateway_t gw, json_t *d)
+{
     return true;
 }
 
@@ -204,42 +242,71 @@ static bool dc_gateway_handle_op(dc_gateway_t gw, json_t *j)
 
     switch (op) {
     case GATEWAY_OPCODE_HELLO: dc_gateway_handle_hello(gw, val); break;
+    case GATEWAY_OPCODE_UPDATE: dc_gateway_handle_update(gw, val); break;
+    case GATEWAY_OPCODE_PONG: break;
     default: break;
     }
 
     return true;
 }
 
-#if 0
 static void dc_gateway_process_read(dc_gateway_t gw)
 {
-    char buf[100] = {0};
-    size_t read = 0;
     int ret = 0;
-    FILE *f = NULL;
-    json_t *j = NULL;
-    size_t where = 0;
+    char buf[100] = {0};
+    size_t outlen = 0;
 
-    ret = curl_easy_recv(gw->easy, &buf, sizeof(buf), &read);
-    return_if_true(ret != CURLE_OK,);
+    return_if_true(gw->easy == NULL,);
 
-    g_byte_array_append(gw->buffer, (uint8_t const*)buf, read);
-
-    f = fmemopen(gw->buffer->data, gw->buffer->len, "r");
-    return_if_true(f == NULL,);
-
-    j = json_loadf(f, JSON_DISABLE_EOF_CHECK, NULL);
-    where = ftell(f);
-
-    fclose(f);
-    f = NULL;
-
-    if (j != NULL) {
-        g_ptr_array_add(gw->ops, j);
-        g_byte_array_remove_range(gw->buffer, 0, where);
-    }
+    do {
+        ret = curl_easy_recv(gw->easy, buf, sizeof(buf), &outlen);
+        if (ret == CURLE_OK && outlen > 0) {
+            FILE *f = fopen("output.txt", "a+");
+            fwrite(buf, outlen, sizeof(char), f);
+            fputc('\n', f);
+            fclose(f);
+            g_byte_array_append(gw->buffer, (uint8_t const*)buf, outlen);
+        }
+    } while (ret == CURLE_OK && outlen > 0);
 }
-#endif
+
+static void dc_gateway_process_frame(dc_gateway_t gw)
+{
+    size_t ret = 0;
+    uint8_t *data = NULL;
+    size_t datalen = 0;
+    uint8_t type = 0;
+
+    ret = dc_gateway_parseframe(gw->buffer->data, gw->buffer->len,
+                                &type, &data, &datalen
+        );
+    return_if_true(ret == 0,);
+
+    g_byte_array_remove_range(gw->buffer, 0, ret);
+
+    switch (type) {
+    case GATEWAY_FRAME_TEXT_DATA:
+    {
+        json_t *j = NULL;
+
+        j = json_loadb((char const*)data, datalen,
+                       JSON_DISABLE_EOF_CHECK, NULL);
+        if (j != NULL) {
+            g_ptr_array_add(gw->ops, j);
+        }
+    } break;
+
+    case GATEWAY_FRAME_DISCONNECT:
+    {
+        dc_gateway_disconnect(gw);
+    } break;
+
+    }
+
+    free(data);
+    data = NULL;
+    datalen = 0;
+}
 
 static void dc_gateway_process_in(dc_gateway_t gw)
 {
@@ -250,37 +317,46 @@ static void dc_gateway_process_in(dc_gateway_t gw)
     }
 }
 
-static void dc_gateway_process_out(dc_gateway_t gw)
+static bool dc_gateway_process_out(dc_gateway_t gw, json_t *j)
 {
     char *str = NULL;
-    size_t slen = 0, outlen = 0, sent = 0;
     uint8_t *mask = NULL;
+    size_t outlen = 0, outlen2 = 0;
+    int ret = 0;
+    bool r = false;
 
-    while (gw->out->len > 0) {
-        json_t *j = g_ptr_array_index(gw->out, 0);
+    str = json_dumps(j, JSON_COMPACT);
+    goto_if_true(str == NULL, cleanup);
 
-        str = json_dumps(j, JSON_COMPACT);
+    mask = dc_gateway_makeframe((uint8_t const *)str, strlen(str),
+                                GATEWAY_FRAME_TEXT_DATA,
+                                &outlen
+        );
+    goto_if_true(mask == NULL, cleanup);
 
-        if (str != NULL) {
-            slen = strlen(str);
-            mask = dc_gateway_makeframe((uint8_t const *)str, slen, 0, &outlen);
-            curl_easy_send(gw->easy, mask, outlen, &sent);
+    ret = curl_easy_send(gw->easy, mask, outlen, &outlen2);
+    goto_if_true(ret != CURLE_OK || outlen2 != outlen, cleanup);
 
-            FILE *f = fopen("websocket.txt", "a+");
-            fprintf(f, "<< %s\n", str);
-            fclose(f);
-        }
+    r = true;
 
-        free(str);
-        free(mask);
+cleanup:
 
-        g_ptr_array_remove_index(gw->out, 0);
-    }
+    free(str);
+    str = NULL;
+
+    free(mask);
+    mask = NULL;
+
+    return r;
 }
 
 void dc_gateway_process(dc_gateway_t gw)
 {
     time_t diff = 0;
+
+    if (!dc_gateway_connected(gw)) {
+        return;
+    }
 
     if (gw->heartbeat_interval > 0) {
         diff = time(NULL) - gw->last_heartbeat;
@@ -289,7 +365,22 @@ void dc_gateway_process(dc_gateway_t gw)
         }
     }
 
-    //dc_gateway_process_read(gw);
-    dc_gateway_process_in(gw);
-    dc_gateway_process_out(gw);
+    dc_gateway_process_read(gw);
+
+    if (gw->buffer->len > 0) {
+        dc_gateway_process_frame(gw);
+        if (!dc_gateway_connected(gw)) {
+            return;
+        }
+    }
+
+    if (gw->ops->len > 0) {
+        dc_gateway_process_in(gw);
+    }
+
+    while (gw->out->len > 0) {
+        json_t *j = g_ptr_array_index(gw->out, 0);
+        dc_gateway_process_out(gw, j);
+        g_ptr_array_remove_index(gw->out, 0);
+    }
 }

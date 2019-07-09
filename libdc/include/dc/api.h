@@ -37,11 +37,6 @@ json_t *dc_api_call_sync(dc_api_t api, char const *token,
                          json_t *j);
 
 /**
- * Establish a GATEWAY to the discord servers.
- */
-dc_gateway_t dc_api_establish_gateway(dc_api_t api, dc_account_t login);
-
-/**
  * Authenticate a given user account. The user account should have
  * email, and password set. If the auth succeeds the account will have
  * a login token, and will from now on be the "login account". You
