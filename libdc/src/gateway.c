@@ -228,6 +228,11 @@ static bool dc_gateway_handle_update(dc_gateway_t gw, json_t *d)
     return true;
 }
 
+static bool dc_gateway_handle_event(dc_gateway_t gw, json_t *d)
+{
+    return true;
+}
+
 static bool dc_gateway_handle_op(dc_gateway_t gw, json_t *j)
 {
     json_t *val = NULL;
@@ -241,6 +246,7 @@ static bool dc_gateway_handle_op(dc_gateway_t gw, json_t *j)
     return_if_true(val == NULL || !json_is_object(val), false);
 
     switch (op) {
+    case GATEWAY_OPCODE_EVENT: dc_gateway_handle_event(gw, val); break;
     case GATEWAY_OPCODE_HELLO: dc_gateway_handle_hello(gw, val); break;
     case GATEWAY_OPCODE_UPDATE: dc_gateway_handle_update(gw, val); break;
     case GATEWAY_OPCODE_PONG: break;

@@ -12,6 +12,7 @@ struct dc_gateway_;
 typedef struct dc_gateway_ *dc_gateway_t;
 
 typedef enum {
+    GATEWAY_OPCODE_EVENT = 0,
     GATEWAY_OPCODE_PING = 1,
     GATEWAY_OPCODE_IDENTIFY = 2,
     GATEWAY_OPCODE_UPDATE = 3,
