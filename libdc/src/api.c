@@ -79,26 +79,27 @@ void dc_api_signal(dc_api_t api, CURL *easy, int code)
     }
 }
 
-#ifdef DEBUG
-static int debug_callback(CURL *handle, curl_infotype type,
-                          char *data, size_t size,
-                          void *userptr
-    )
+int debug_callback(CURL *handle, curl_infotype type,
+                   char *data, size_t size,
+                   void *userptr)
 {
+    FILE *f = fopen("debug.log", "a+");
+
     switch (type) {
-    case CURLINFO_TEXT: printf("+T: %s", data); break;
-    case CURLINFO_HEADER_IN: printf(">H: %s", data); break;
-    case CURLINFO_HEADER_OUT: printf("<H: %s", data); break;
-    case CURLINFO_DATA_IN: printf(">D: %s\n", data); break;
-    case CURLINFO_DATA_OUT: printf("<D: %s\n", data); break;
-    case CURLINFO_SSL_DATA_IN:
-    case CURLINFO_SSL_DATA_OUT:
+    case CURLINFO_TEXT: fprintf(f, "+T: %s", data); break;
+    case CURLINFO_HEADER_IN: fprintf(f, ">H: %s", data); break;
+    case CURLINFO_HEADER_OUT: fprintf(f, "<H: %s", data); break;
+    case CURLINFO_DATA_IN: fprintf(f, ">D: %s\n", data); break;
+    case CURLINFO_DATA_OUT: fprintf(f, "<D: %s\n", data); break;
+    case CURLINFO_SSL_DATA_IN: fprintf(f, "<S: SSL_DATA_IN\n"); break;
+    case CURLINFO_SSL_DATA_OUT: fprintf(f, "<S: SSL_DATA_OUT\n"); break;
     default: break;
     }
 
+    fclose(f);
+
     return 0;
 }
-#endif
 
 static dc_api_sync_t
 dc_api_do(dc_api_t api, char const *verb,
