@@ -235,6 +235,25 @@ void dc_session_add_account(dc_session_t s, dc_account_t u)
     }
 }
 
+dc_account_t dc_session_account_fullname(dc_session_t s, char const *f)
+{
+    return_if_true(s == NULL || f == NULL, NULL);
+    GHashTableIter iter;
+    gpointer key, value;
+
+    /* TODO: hash table with fullname
+     */
+    g_hash_table_iter_init(&iter, s->accounts);
+    while (g_hash_table_iter_next(&iter, &key, &value)) {
+        dc_account_t a = (dc_account_t)value;
+        if (strcmp(dc_account_fullname(a), f) == 0) {
+            return a;
+        }
+    }
+
+    return NULL;
+}
+
 void dc_session_add_channel(dc_session_t s, dc_channel_t u)
 {
     return_if_true(s == NULL || u == NULL,);
@@ -247,4 +266,64 @@ void dc_session_add_channel(dc_session_t s, dc_channel_t u)
         /* TODO: dedup for saving storage
          */
     }
+}
+
+dc_channel_t dc_session_make_channel(dc_session_t s, dc_account_t *r,
+                                     size_t n)
+{
+    dc_channel_t c = NULL;
+
+    /* check if we have the channel already with those recipients
+     */
+    c = dc_session_channel_recipients(s, r, n);
+    return_if_true(c != NULL, c);
+
+    /* no? create new one
+     */
+    if (!dc_api_create_channel(s->api, s->login, r, n, &c)) {
+        return NULL;
+    }
+
+    return_if_true(c == NULL, NULL);
+    dc_session_add_channel(s, c);
+
+    /* unref once to match the proper ref count after dc_session_add_channel()
+     * BUG: if dc_session_add_channel() fails this is bad
+     */
+    dc_unref(c);
+
+    return c;
+}
+
+dc_channel_t dc_session_channel_recipients(dc_session_t s,
+                                           dc_account_t *r, size_t sz)
+{
+    return_if_true(s == NULL || r == NULL || sz == 0, NULL);
+
+    GHashTableIter iter;
+    gpointer key, value;
+    size_t i = 0, j = 0;
+
+    g_hash_table_iter_init(&iter, s->channels);
+    while (g_hash_table_iter_next(&iter, &key, &value)) {
+        dc_channel_t chan = (dc_channel_t)value;
+        bool found = true;
+
+        if (dc_channel_recipients(chan) != sz) {
+            continue;
+        }
+
+        for (i = 0; i < sz; i++) {
+            if (!dc_channel_has_recipient(chan, r[j])) {
+                found = false;
+                break;
+            }
+        }
+
+        if (found) {
+            return chan;
+        }
+    }
+
+    return NULL;
 }

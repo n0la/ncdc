@@ -27,7 +27,7 @@ bool dc_api_get_messages(dc_api_t api, dc_account_t login, dc_channel_t c)
         g_ptr_array_add(msgs, m);
     }
 
-    dc_channel_addmessages(c, (dc_message_t*)msgs->pdata, msgs->len);
+    dc_channel_add_messages(c, (dc_message_t*)msgs->pdata, msgs->len);
     ret = true;
 
 cleanup:

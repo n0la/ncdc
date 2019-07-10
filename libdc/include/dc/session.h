@@ -56,11 +56,29 @@ dc_account_t dc_session_me(dc_session_t s);
  * access to the internal account cache
  */
 void dc_session_add_account(dc_session_t s, dc_account_t u);
+dc_account_t dc_session_account_fullname(dc_session_t s, char const *f);
 
 /**
- * access to the internal channel cache
+ * Adds a new channel to the internal cache.
  */
 void dc_session_add_channel(dc_session_t s, dc_channel_t u);
+
+/**
+ * Creates a new channel, or returns an existing channel if a channel with
+ * these recipients already exists.
+ * Warning: You must dc_ref() the return object if you need it beyond the
+ * life-span of the session.
+ */
+dc_channel_t dc_session_make_channel(dc_session_t s, dc_account_t *r,
+                                     size_t n);
+
+/**
+ * Finds a channel object by that match the given recipients.
+ * Warning: You must dc_ref() the return object if you need it beyond the
+ * life-span of the session.
+ */
+dc_channel_t dc_session_channel_recipients(dc_session_t s,
+                                           dc_account_t *r, size_t sz);
 
 /**
  * comparision functions for sorting, and finding

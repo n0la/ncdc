@@ -56,11 +56,14 @@ dc_channel_type_t dc_channel_type(dc_channel_t c);
 void dc_channel_set_type(dc_channel_t c, dc_channel_type_t t);
 
 size_t dc_channel_recipients(dc_channel_t c);
-void dc_channel_addrecipient(dc_channel_t c, dc_account_t a);
-dc_account_t dc_channel_nthrecipient(dc_channel_t c, size_t i);
+void dc_channel_add_recipient(dc_channel_t c, dc_account_t a);
+dc_account_t dc_channel_nth_recipient(dc_channel_t c, size_t i);
+bool dc_channel_has_recipient(dc_channel_t c, dc_account_t a);
 
 size_t dc_channel_messages(dc_channel_t c);
-dc_message_t dc_channel_nthmessage(dc_channel_t c, size_t i);
-void dc_channel_addmessages(dc_channel_t c, dc_message_t *m, size_t s);
+dc_message_t dc_channel_nth_message(dc_channel_t c, size_t i);
+void dc_channel_add_messages(dc_channel_t c, dc_message_t *m, size_t s);
+
+bool dc_channel_compare(dc_channel_t a, dc_channel_t b);
 
 #endif

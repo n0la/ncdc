@@ -249,18 +249,27 @@ size_t dc_channel_recipients(dc_channel_t c)
     return c->recipients->len;
 }
 
-dc_account_t dc_channel_nthrecipient(dc_channel_t c, size_t i)
+dc_account_t dc_channel_nth_recipient(dc_channel_t c, size_t i)
 {
     return_if_true(c == NULL || c->recipients == NULL, NULL);
     return_if_true(i >= c->recipients->len, NULL);
     return g_ptr_array_index(c->recipients, i);
 }
 
-void dc_channel_addrecipient(dc_channel_t c, dc_account_t a)
+void dc_channel_add_recipient(dc_channel_t c, dc_account_t a)
 {
     return_if_true(c == NULL || a == NULL,);
     g_ptr_array_add(c->recipients, dc_ref(a));
 }
+
+bool dc_channel_has_recipient(dc_channel_t c, dc_account_t a)
+{
+    return_if_true(c == NULL || a == NULL, false);
+    return g_ptr_array_find_with_equal_func(
+        c->recipients, a, (GEqualFunc)dc_account_equal, NULL
+        );
+}
+
 
 size_t dc_channel_messages(dc_channel_t c)
 {
@@ -268,14 +277,14 @@ size_t dc_channel_messages(dc_channel_t c)
     return c->messages->len;
 }
 
-dc_message_t dc_channel_nthmessage(dc_channel_t c, size_t i)
+dc_message_t dc_channel_nth_message(dc_channel_t c, size_t i)
 {
     return_if_true(c == NULL || c->messages == NULL, NULL);
     return_if_true(i >= c->messages->len, NULL);
     return g_ptr_array_index(c->messages, i);
 }
 
-void dc_channel_addmessages(dc_channel_t c, dc_message_t *m, size_t s)
+void dc_channel_add_messages(dc_channel_t c, dc_message_t *m, size_t s)
 {
     return_if_true(c == NULL || c->messages == NULL,);
     return_if_true(m == NULL || s == 0,);
@@ -287,4 +296,11 @@ void dc_channel_addmessages(dc_channel_t c, dc_message_t *m, size_t s)
     }
 
     g_ptr_array_sort(c->messages, (GCompareFunc)dc_message_compare);
+}
+
+bool dc_channel_compare(dc_channel_t a, dc_channel_t b)
+{
+    return_if_true(a == NULL || b == NULL, false);
+    return_if_true(a->id == NULL || b->id == NULL, false);
+    return (strcmp(a->id, b->id) == 0);
 }

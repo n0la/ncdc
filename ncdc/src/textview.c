@@ -54,7 +54,7 @@ static void ncdc_textview_maketitle(ncdc_textview_t v)
     size_t rlen = dc_channel_recipients(v->channel);
 
     for (i = 0; i < rlen; i++) {
-        dc_account_t r = dc_channel_nthrecipient(v->channel, i);
+        dc_account_t r = dc_channel_nth_recipient(v->channel, i);
         fwprintf(f, L"%s", dc_account_fullname(r));
         if (i < (rlen-1)) {
             fwprintf(f, L",");
@@ -201,7 +201,7 @@ ncdc_textview_render_msgs(ncdc_textview_t v, WINDOW *win, int lines, int cols)
     atline = lines;
 
     for (i = msgs-1; i >= 0; i--) {
-        dc_message_t m = dc_channel_nthmessage(v->channel, i);
+        dc_message_t m = dc_channel_nth_message(v->channel, i);
         wchar_t *s = ncdc_textview_format(m);
         wchar_t const *end = s, *last = NULL;
         size_t len = 0;

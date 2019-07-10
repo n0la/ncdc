@@ -331,7 +331,7 @@ void dc_account_set_friends(dc_account_t a, dc_account_t *friends, size_t len)
     }
 }
 
-dc_account_t dc_account_findfriend(dc_account_t a, char const *fullname)
+dc_account_t dc_account_find_friend(dc_account_t a, char const *fullname)
 {
     size_t i = 0;
     return_if_true(a == NULL || fullname == NULL, NULL);
@@ -352,7 +352,7 @@ void dc_account_add_friend(dc_account_t a, dc_account_t friend)
     g_ptr_array_add(a->friends, dc_ref(friend));
 }
 
-dc_account_t dc_account_nthfriend(dc_account_t a, size_t i)
+dc_account_t dc_account_nth_friend(dc_account_t a, size_t i)
 {
     return_if_true(a == NULL || a->friends == NULL, NULL);
     return (dc_account_t)g_ptr_array_index(a->friends, i);

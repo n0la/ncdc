@@ -79,9 +79,9 @@ bool dc_account_equal(dc_account_t a, dc_account_t b);
  */
 void dc_account_set_friends(dc_account_t a, dc_account_t *ptr, size_t len);
 void dc_account_add_friend(dc_account_t a, dc_account_t friend);
-dc_account_t dc_account_nthfriend(dc_account_t a, size_t i);
+dc_account_t dc_account_nth_friend(dc_account_t a, size_t i);
 size_t dc_account_friends_size(dc_account_t a);
-dc_account_t dc_account_findfriend(dc_account_t a, char const *fullname);
+dc_account_t dc_account_find_friend(dc_account_t a, char const *fullname);
 
 int dc_account_friend_state(dc_account_t a);
 void dc_account_set_friend_state(dc_account_t a, int state);
