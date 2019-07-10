@@ -23,6 +23,18 @@ static void dc_session_free(dc_session_t s)
     free(s);
 }
 
+static void dc_session_handler(dc_gateway_t gw, dc_event_t e, void *p)
+{
+    dc_session_t s = (dc_session_t)p;
+
+    char *str = NULL;
+    str = json_dumps(dc_event_payload(e), 0);
+    FILE *f = fopen("events.txt", "a+");
+    fprintf(f, "%p: %s: %s\n", s, dc_event_type(e), str);
+    free(str);
+    fclose(f);
+}
+
 dc_session_t dc_session_new(dc_loop_t loop)
 {
     return_if_true(loop == NULL, NULL);
@@ -88,6 +100,7 @@ bool dc_session_login(dc_session_t s, dc_account_t login)
             return false;
         }
 
+        dc_gateway_set_callback(s->gateway, dc_session_handler, s);
         dc_gateway_set_login(s->gateway, s->login);
         dc_loop_add_gateway(s->loop, s->gateway);
     }
