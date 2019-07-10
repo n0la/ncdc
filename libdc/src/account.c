@@ -116,24 +116,43 @@ dc_account_t dc_account_from_fullname(char const *fullid)
     return acc;
 }
 
-dc_account_t dc_account_from_json(json_t *j)
+bool dc_account_load(dc_account_t user, json_t *j)
+{
+    json_t *val = NULL;
+
+    return_if_true(!json_is_object(j), false);
+
+    val = json_object_get(j, "id");
+    return_if_true(val == NULL || !json_is_string(val), false);
+    dc_account_set_id(user, json_string_value(val));
+
+    val = json_object_get(j, "username");
+    return_if_true(val == NULL || !json_is_string(val), false);
+    dc_account_set_username(user, json_string_value(val));
+
+    val = json_object_get(j, "discriminator");
+    return_if_true(val == NULL || !json_is_string(val), false);
+    dc_account_set_discriminator(user, json_string_value(val));
+
+    return true;
+}
+
+dc_account_t dc_account_from_relationship(json_t *j)
 {
     dc_account_t user = dc_account_new();
     json_t *val = NULL;
 
-    goto_if_true(!json_is_object(j), error);
+    val = json_object_get(j, "user");
+    goto_if_true(val == NULL || !json_is_object(val), error);
 
-    val = json_object_get(j, "username");
-    goto_if_true(val == NULL || !json_is_string(val), error);
-    dc_account_set_username(user, json_string_value(val));
+    if (!dc_account_load(user, val)) {
+        goto error;
+    }
 
-    val = json_object_get(j, "discriminator");
-    goto_if_true(val == NULL || !json_is_string(val), error);
-    dc_account_set_discriminator(user, json_string_value(val));
-
-    val = json_object_get(j, "id");
-    goto_if_true(val == NULL || !json_is_string(val), error);
-    dc_account_set_id(user, json_string_value(val));
+    val = json_object_get(j, "type");
+    if (val != NULL && json_is_integer(val)) {
+        dc_account_set_friend_state(user, json_integer_value(val));
+    }
 
     return user;
 
@@ -141,6 +160,18 @@ error:
 
     dc_unref(user);
     return NULL;
+}
+
+dc_account_t dc_account_from_json(json_t *j)
+{
+    dc_account_t user = dc_account_new();
+
+    if (!dc_account_load(user, j)) {
+        dc_unref(user);
+        return NULL;
+    }
+
+    return user;
 }
 
 json_t *dc_account_to_json(dc_account_t a)
@@ -313,6 +344,12 @@ dc_account_t dc_account_findfriend(dc_account_t a, char const *fullname)
     }
 
     return NULL;
+}
+
+void dc_account_add_friend(dc_account_t a, dc_account_t friend)
+{
+    return_if_true(a == NULL || friend == NULL,);
+    g_ptr_array_add(a->friends, dc_ref(friend));
 }
 
 dc_account_t dc_account_nthfriend(dc_account_t a, size_t i)

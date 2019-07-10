@@ -7,6 +7,13 @@
 struct dc_event_;
 typedef struct dc_event_ *dc_event_t;
 
+typedef enum {
+    DC_EVENT_TYPE_UNKNOWN = 0,
+    DC_EVENT_TYPE_READY,
+
+    DC_EVENT_TYPE_LAST,
+} dc_event_type_t;
+
 dc_event_t dc_event_new(char const *type, json_t *payload);
 
 /**
@@ -21,5 +28,10 @@ char const *dc_event_type(dc_event_t e);
  * could be json_null() if the event has no associated payload.
  */
 json_t *dc_event_payload(dc_event_t e);
+
+/**
+ * Returns an integer code representing the given type string.
+ */
+dc_event_type_t dc_event_type_code(dc_event_t e);
 
 #endif

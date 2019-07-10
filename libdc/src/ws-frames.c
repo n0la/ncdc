@@ -102,7 +102,7 @@ dc_gateway_parseframe(uint8_t const *data, size_t datalen,
         goto_if_true(datalen <= idx, cleanup);
         memcpy(&len, data+idx, sizeof(len));
 
-        data_len = len;
+        data_len = GUINT16_TO_BE(len);
         idx += sizeof(len);
     } else if (l == 127) {
         /* read an uint16_t from the data
@@ -113,7 +113,7 @@ dc_gateway_parseframe(uint8_t const *data, size_t datalen,
         goto_if_true(datalen <= idx, cleanup);
         memcpy(&len, data+idx, sizeof(len));
 
-        data_len = len;
+        data_len = GUINT64_TO_BE(len);
         idx += sizeof(len);
     }
 

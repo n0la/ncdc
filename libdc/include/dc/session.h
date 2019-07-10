@@ -52,6 +52,19 @@ bool dc_session_has_token(dc_session_t s);
  */
 dc_account_t dc_session_me(dc_session_t s);
 
+/**
+ * access to the internal account cache
+ */
+void dc_session_add_account(dc_session_t s, dc_account_t u);
+
+/**
+ * access to the internal channel cache
+ */
+void dc_session_add_channel(dc_session_t s, dc_channel_t u);
+
+/**
+ * comparision functions for sorting, and finding
+ */
 bool dc_session_equal_me(dc_session_t s, dc_account_t a);
 bool dc_session_equal_me_fullname(dc_session_t s, char const *a);
 

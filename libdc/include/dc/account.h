@@ -46,7 +46,9 @@ dc_account_t dc_account_new2(char const *email, char const *pass);
 dc_account_t dc_account_from_fullname(char const *fullid);
 
 dc_account_t dc_account_from_json(json_t *j);
+dc_account_t dc_account_from_relationship(json_t *j);
 json_t *dc_account_to_json(dc_account_t a);
+bool dc_account_load(dc_account_t a, json_t *j);
 
 void dc_account_set_email(dc_account_t a, char const *email);
 char const *dc_account_email(dc_account_t a);
@@ -76,6 +78,7 @@ bool dc_account_equal(dc_account_t a, dc_account_t b);
 /* relationships
  */
 void dc_account_set_friends(dc_account_t a, dc_account_t *ptr, size_t len);
+void dc_account_add_friend(dc_account_t a, dc_account_t friend);
 dc_account_t dc_account_nthfriend(dc_account_t a, size_t i);
 size_t dc_account_friends_size(dc_account_t a);
 dc_account_t dc_account_findfriend(dc_account_t a, char const *fullname);

@@ -56,6 +56,7 @@ dc_channel_type_t dc_channel_type(dc_channel_t c);
 void dc_channel_set_type(dc_channel_t c, dc_channel_type_t t);
 
 size_t dc_channel_recipients(dc_channel_t c);
+void dc_channel_addrecipient(dc_channel_t c, dc_account_t a);
 dc_account_t dc_channel_nthrecipient(dc_channel_t c, size_t i);
 
 size_t dc_channel_messages(dc_channel_t c);

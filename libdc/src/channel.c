@@ -256,6 +256,12 @@ dc_account_t dc_channel_nthrecipient(dc_channel_t c, size_t i)
     return g_ptr_array_index(c->recipients, i);
 }
 
+void dc_channel_addrecipient(dc_channel_t c, dc_account_t a)
+{
+    return_if_true(c == NULL || a == NULL,);
+    g_ptr_array_add(c->recipients, dc_ref(a));
+}
+
 size_t dc_channel_messages(dc_channel_t c)
 {
     return_if_true(c == NULL || c->messages == NULL, 0);

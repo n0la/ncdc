@@ -57,3 +57,22 @@ json_t *dc_event_payload(dc_event_t e)
     return_if_true(e == NULL, NULL);
     return e->payload;
 }
+
+dc_event_type_t dc_event_type_code(dc_event_t e)
+{
+    static char const *types[] = {
+        "UNKNOWN",
+        "READY",
+        NULL
+    };
+
+    int i = 0;
+
+    for (i = 0; types[i] != NULL; i++) {
+        if (strcmp(types[i], e->type) == 0) {
+            return (dc_event_type_t)i;
+        }
+    }
+
+    return DC_EVENT_TYPE_UNKNOWN;
+}

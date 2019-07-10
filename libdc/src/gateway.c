@@ -309,10 +309,6 @@ static void dc_gateway_process_read(dc_gateway_t gw)
     do {
         ret = curl_easy_recv(gw->easy, buf, sizeof(buf), &outlen);
         if (ret == CURLE_OK && outlen > 0) {
-            FILE *f = fopen("output.txt", "a+");
-            fwrite(buf, outlen, sizeof(char), f);
-            fputc('\n', f);
-            fclose(f);
             g_byte_array_append(gw->buffer, (uint8_t const*)buf, outlen);
         }
     } while (ret == CURLE_OK && outlen > 0);
