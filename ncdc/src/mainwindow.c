@@ -200,9 +200,10 @@ static void ncdc_mainwindow_render_status(ncdc_mainwindow_t n)
     wcsftime(timestr, 99, L"[%H:%M]", t);
     fwprintf(f, L"%ls", timestr);
 
-    if (current_account == NULL) {
+    if (!is_logged_in()) {
         fwprintf(f, L" [not logged in]");
     } else {
+        dc_account_t current_account = dc_session_me(current_session);
         fwprintf(f, L" [%s]", dc_account_fullname(current_account));
     }
 

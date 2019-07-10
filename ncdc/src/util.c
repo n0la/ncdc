@@ -1,5 +1,11 @@
 #include <ncdc/ncdc.h>
 
+bool is_logged_in(void)
+{
+    return_if_true(current_session == NULL, false);
+    return dc_session_has_token(current_session);
+}
+
 wchar_t *util_readkey(int e, WINDOW *win)
 {
     wint_t esc[7] = {0};

@@ -14,6 +14,9 @@ struct dc_gateway_
 
     dc_account_t login;
 
+    dc_gateway_event_callback_t callback;
+    void *callback_data;
+
     uint64_t heartbeat_interval;
     time_t last_heartbeat;
 };
@@ -35,6 +38,11 @@ static void dc_gateway_free(dc_gateway_t g)
     if (g->buffer != NULL) {
         g_byte_array_unref(g->buffer);
         g->buffer = NULL;
+    }
+
+    if (g->easy != NULL) {
+        curl_easy_cleanup(g->easy);
+        g->easy = NULL;
     }
 
     dc_unref(g->login);
@@ -72,6 +80,15 @@ void dc_gateway_set_login(dc_gateway_t gw, dc_account_t login)
     gw->login = dc_ref(login);
 }
 
+void dc_gateway_set_callback(dc_gateway_t gw, dc_gateway_event_callback_t c,
+                             void *userdata)
+{
+    return_if_true(gw == NULL,);
+
+    gw->callback = c;
+    gw->callback_data = userdata;
+}
+
 bool dc_gateway_connect(dc_gateway_t gw)
 {
     return_if_true(gw == NULL || gw->easy != NULL, true);
@@ -82,6 +99,15 @@ bool dc_gateway_connect(dc_gateway_t gw)
 
     gw->easy = curl_easy_init();
     goto_if_true(gw->easy == NULL, error);
+
+    /* I had already introduced libcurl in a combination with libevent for all
+     * the low level API stuff (i.e. POST/PUT/DELETE), and at the time of writing
+     * the websocket code it was too late to rip it out, and replace with something
+     * else (e.g. libwebsockets).
+     *
+     * CURL has no inbuilt way to handle websockets (yet), and thus we have to do
+     * it ourselves by using CONNECT_ONLY. It works, but it is obviously a crutch.
+     */
 
     curl_easy_setopt(gw->easy, CURLOPT_URL, DISCORD_GATEWAY);
     curl_easy_setopt(gw->easy, CURLOPT_FRESH_CONNECT, 1L);
@@ -206,7 +232,7 @@ static void dc_gateway_queue_identify(dc_gateway_t gw)
     dc_gateway_queue(gw, GATEWAY_OPCODE_IDENTIFY, j);
 }
 
-static bool dc_gateway_handle_hello(dc_gateway_t gw, json_t *d)
+static bool dc_gateway_handle_hello(dc_gateway_t gw, char const *s, json_t *d)
 {
     json_t *val = NULL;
 
@@ -223,13 +249,23 @@ static bool dc_gateway_handle_hello(dc_gateway_t gw, json_t *d)
     return true;
 }
 
-static bool dc_gateway_handle_update(dc_gateway_t gw, json_t *d)
+static bool dc_gateway_handle_update(dc_gateway_t gw, char const *s, json_t *d)
 {
+    /* TODO
+     */
     return true;
 }
 
-static bool dc_gateway_handle_event(dc_gateway_t gw, json_t *d)
+static bool dc_gateway_handle_event(dc_gateway_t gw, char const *s, json_t *d)
 {
+    dc_event_t e = dc_event_new(s, d);
+
+    if (gw->callback != NULL && e != NULL) {
+        gw->callback(gw, e, gw->callback_data);
+    }
+
+    dc_unref(e);
+
     return true;
 }
 
@@ -237,18 +273,24 @@ static bool dc_gateway_handle_op(dc_gateway_t gw, json_t *j)
 {
     json_t *val = NULL;
     dc_gateway_opcode_t op = 0;
+    char const *s = NULL;
 
     val = json_object_get(j, "op");
     return_if_true(val == NULL || !json_is_integer(val), false);
     op = (dc_gateway_opcode_t)json_integer_value(val);
 
+    val = json_object_get(j, "t");
+    if (val != NULL && json_is_string(val)) {
+        s = json_string_value(val);
+    }
+
     val = json_object_get(j, "d");
     return_if_true(val == NULL || !json_is_object(val), false);
 
     switch (op) {
-    case GATEWAY_OPCODE_EVENT: dc_gateway_handle_event(gw, val); break;
-    case GATEWAY_OPCODE_HELLO: dc_gateway_handle_hello(gw, val); break;
-    case GATEWAY_OPCODE_UPDATE: dc_gateway_handle_update(gw, val); break;
+    case GATEWAY_OPCODE_EVENT: dc_gateway_handle_event(gw, s, val); break;
+    case GATEWAY_OPCODE_HELLO: dc_gateway_handle_hello(gw, s, val); break;
+    case GATEWAY_OPCODE_UPDATE: dc_gateway_handle_update(gw, s, val); break;
     case GATEWAY_OPCODE_PONG: break;
     default: break;
     }

@@ -21,10 +21,10 @@ bool thread_done = false;
 static pthread_t event_thread;
 static struct event_base *base = NULL;
 
-/* all the accounts we have logged into
+/* all the sessions we currently have around
  */
-GHashTable *accounts = NULL;
-dc_account_t current_account = NULL;
+GPtrArray *sessions = NULL;
+dc_session_t current_session = NULL;
 
 char *ncdc_private_dir = NULL;
 void *config = NULL;
@@ -35,26 +35,17 @@ dc_loop_t loop = NULL;
  */
 dc_api_t api = NULL;
 
-static void cleanup_account(dc_account_t a)
-{
-    if (dc_account_has_token(a)) {
-        dc_api_logout(api, a);
-    }
-
-    dc_unref(a);
-}
-
 static void cleanup(void)
 {
     endwin();
 
-    if (accounts != NULL) {
-        g_hash_table_unref(accounts);
-        accounts = NULL;
+    if (sessions != NULL) {
+        g_ptr_array_unref(sessions);
+        sessions = NULL;
     }
 
-    dc_unref(current_account);
-    current_account = NULL;
+    dc_unref(current_session);
+    current_session = NULL;
 
     thread_done = true;
     dc_loop_abort(loop);
@@ -138,10 +129,8 @@ static bool init_everything(void)
     config = ncdc_config_new();
     return_if_true(config == NULL, false);
 
-    accounts = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                     g_free, (GDestroyNotify)cleanup_account
-        );
-    return_if_true(accounts == NULL, false);
+    sessions = g_ptr_array_new_with_free_func((GDestroyNotify)dc_unref);
+    return_if_true(sessions == NULL, false);
 
     ret = pthread_create(&event_thread, NULL, looper, NULL);
     return_if_true(ret != 0, false);

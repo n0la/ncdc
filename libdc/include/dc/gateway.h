@@ -5,11 +5,21 @@
 #include <stdlib.h>
 
 #include <dc/account.h>
-
-#include <curl/curl.h>
+#include <dc/event.h>
 
 struct dc_gateway_;
 typedef struct dc_gateway_ *dc_gateway_t;
+
+/**
+ * The event callback that will be called by the gateway when a new event
+ * arrives. First parameter is the gateway responsible for sending this
+ * event, second parameter is the event in question, third parameter is
+ * user defined callback data.
+ *
+ * Note that the event will be allocated, and dc_unref()'d by the gateway,
+ * so if you need the event around you need to dc_ref() it.
+ */
+typedef void (*dc_gateway_event_callback_t)(dc_gateway_t, dc_event_t, void*);
 
 typedef enum {
     GATEWAY_OPCODE_EVENT = 0,
@@ -31,6 +41,13 @@ dc_gateway_t dc_gateway_new(void);
 
 void dc_gateway_set_login(dc_gateway_t gw, dc_account_t login);
 
+void dc_gateway_set_callback(dc_gateway_t gw, dc_gateway_event_callback_t c,
+                             void *userdata);
+
+/**
+ * Connect the given gateway. Does nothing if the gateway is already
+ * connected.
+ */
 bool dc_gateway_connect(dc_gateway_t gw);
 
 /**
@@ -45,7 +62,10 @@ void dc_gateway_disconnect(dc_gateway_t gw);
 bool dc_gateway_connected(dc_gateway_t gw);
 
 /**
- * Process the queue of data that came from the websocket.
+ * Process the queue of data that came from the websocket. Since the
+ * gateway handle is not part of whole event_base_loop() shebang, this
+ * must be called individually. dc_loop_once() will do this for you, if
+ * you opt to use dc_loop() (which you should).
  */
 void dc_gateway_process(dc_gateway_t gw);
 

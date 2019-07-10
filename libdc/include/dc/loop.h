@@ -41,9 +41,19 @@ struct event_base *dc_loop_event_base(dc_loop_t l);
 void dc_loop_add_api(dc_loop_t loop, dc_api_t api);
 
 /**
+ * Remove the given API handle from the loop.
+ */
+void dc_loop_remove_api(dc_loop_t loop, dc_api_t api);
+
+/**
  * Add a gateway to be handled with the rest.
  */
 void dc_loop_add_gateway(dc_loop_t loop, dc_gateway_t gw);
+
+/**
+ * Remove the given gateway from the loop.
+ */
+void dc_loop_remove_gateway(dc_loop_t loop, dc_gateway_t gw);
 
 /**
  * Loop once, and process one message in the queues of the event

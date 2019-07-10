@@ -31,20 +31,13 @@
 #include <dc/api.h>
 #include <dc/loop.h>
 #include <dc/account.h>
+#include <dc/session.h>
 
 #define return_if_true(v,r) do { if (v) return r; } while(0)
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)
 
-struct ncdc_account_ {
-    dc_account_t account;
-    GPtrArray *friends;
-    GPtrArray *guilds;
-};
-
-typedef struct ncdc_account_ *ncdc_account_t;
-
-extern GHashTable *accounts;
-extern dc_account_t current_account;
+extern GPtrArray *sessions;
+extern dc_session_t current_session;
 
 extern dc_api_t api;
 extern dc_loop_t loop;
@@ -54,6 +47,8 @@ extern void *config;
 extern void *mainwindow;
 
 #define KEY_ESCAPE 27
+
+bool is_logged_in(void);
 
 wchar_t *util_readkey(int esc, WINDOW *win);
 

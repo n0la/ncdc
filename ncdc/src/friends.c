@@ -4,15 +4,9 @@
 static bool
 ncdc_cmd_friends_list(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
 {
-    bool ret = false;
     size_t i = 0;
     char c = ' ';
-
-    ret = dc_api_get_friends(api, current_account);
-    if (!ret) {
-        LOG(n, L"friends: list: failed to fetch your friends");
-        return false;
-    }
+    dc_account_t current_account = dc_session_me(current_session);
 
     LOG(n, L"/FRIENDS list");
     for (i = 0; i < dc_account_friends_size(current_account); i++) {
@@ -34,6 +28,7 @@ ncdc_cmd_friends_add(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
     char *name = NULL;
     dc_account_t friend = NULL;
     bool ret = false;
+    dc_account_t current_account = dc_session_me(current_session);
 
     if (ac <= 1) {
         return false;
@@ -71,6 +66,7 @@ ncdc_cmd_friends_remove(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
     dc_account_t friend = NULL;
     bool ret = false;
     size_t i = 0;
+    dc_account_t current_account = dc_session_me(current_session);
 
     if (ac <= 1) {
         return false;
@@ -114,6 +110,7 @@ ncdc_cmd_friends_accept(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
     dc_account_t friend = NULL;
     bool ret = false;
     size_t i = 0;
+    dc_account_t current_account = dc_session_me(current_session);
 
     if (ac <= 1) {
         return false;
@@ -164,8 +161,7 @@ bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
     wchar_t *subcmd = NULL;
     ncdc_commands_t *it = NULL;
 
-    if (current_account == NULL ||
-        !dc_account_has_token(current_account)) {
+    if (!is_logged_in()) {
         LOG(n, L"friends: not logged in");
         return false;
     }
