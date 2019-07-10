@@ -69,7 +69,7 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
     relationships = json_object_get(r, "relationships");
     if (relationships != NULL && json_is_array(relationships)) {
         json_array_foreach(relationships, idx, c) {
-            dc_account_t u = dc_account_from_relationship(user);
+            dc_account_t u = dc_account_from_relationship(c);
 
             if (u == NULL) {
                 continue;
