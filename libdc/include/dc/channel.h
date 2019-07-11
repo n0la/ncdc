@@ -21,7 +21,7 @@ typedef enum {
 
     /* A direct message channel for 1:1 communication
      */
-    CHANNEL_TYPE_DM_TEXT,
+    CHANNEL_TYPE_DM,
 
     /* A guild voice channel
      */
@@ -53,6 +53,7 @@ dc_channel_t dc_channel_from_json(json_t *j);
 char const *dc_channel_id(dc_channel_t c);
 
 dc_channel_type_t dc_channel_type(dc_channel_t c);
+bool dc_channel_is_dm(dc_channel_t c);
 void dc_channel_set_type(dc_channel_t c, dc_channel_type_t t);
 
 size_t dc_channel_recipients(dc_channel_t c);

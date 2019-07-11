@@ -18,10 +18,12 @@ struct dc_session_
  */
 typedef void (*dc_session_handler_t)(dc_session_t s, dc_event_t e);
 static void dc_session_handle_ready(dc_session_t s, dc_event_t e);
+static void dc_session_handle_message_create(dc_session_t s, dc_event_t e);
 
 static dc_session_handler_t handlers[DC_EVENT_TYPE_LAST] = {
     [DC_EVENT_TYPE_UNKNOWN] = NULL,
     [DC_EVENT_TYPE_READY] = dc_session_handle_ready,
+    [DC_EVENT_TYPE_MESSAGE_CREATE] = dc_session_handle_message_create,
 };
 
 static void dc_session_free(dc_session_t s)
@@ -44,6 +46,28 @@ static void dc_session_free(dc_session_t s)
     dc_unref(s->loop);
 
     free(s);
+}
+
+static void dc_session_handle_message_create(dc_session_t s, dc_event_t e)
+{
+    dc_message_t m = NULL;
+    json_t *r = dc_event_payload(e);
+    char const *id = NULL;
+
+    m = dc_message_from_json(r);
+    goto_if_true(m == NULL, cleanup);
+
+    id = dc_message_channel_id(m);
+    goto_if_true(m == NULL, cleanup);
+
+    if (g_hash_table_contains(s->channels, id)) {
+        dc_channel_t c = g_hash_table_lookup(s->channels, id);
+        dc_channel_add_messages(c, &m, 1);
+    }
+
+cleanup:
+
+    dc_unref(m);
 }
 
 static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
@@ -276,21 +300,28 @@ dc_channel_t dc_session_make_channel(dc_session_t s, dc_account_t *r,
     /* check if we have the channel already with those recipients
      */
     c = dc_session_channel_recipients(s, r, n);
-    return_if_true(c != NULL, c);
 
-    /* no? create new one
-     */
-    if (!dc_api_create_channel(s->api, s->login, r, n, &c)) {
-        return NULL;
+    if (c == NULL) {
+        /* no? create new one
+         */
+        if (!dc_api_create_channel(s->api, s->login, r, n, &c)) {
+            return NULL;
+        }
+
+        return_if_true(c == NULL, NULL);
+        dc_session_add_channel(s, c);
+        /* unref once to match the proper ref count after
+         * dc_session_add_channel()
+         * BUG: if dc_session_add_channel() fails this is bad
+         */
+        dc_unref(c);
     }
 
-    return_if_true(c == NULL, NULL);
-    dc_session_add_channel(s, c);
-
-    /* unref once to match the proper ref count after dc_session_add_channel()
-     * BUG: if dc_session_add_channel() fails this is bad
-     */
-    dc_unref(c);
+    if (dc_channel_messages(c) <= 0 && dc_channel_is_dm(c)) {
+        /* fetch some messages for it
+         */
+        dc_api_get_messages(s->api, s->login, c);
+    }
 
     return c;
 }

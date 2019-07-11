@@ -10,7 +10,9 @@ typedef struct dc_event_ *dc_event_t;
 typedef enum {
     DC_EVENT_TYPE_UNKNOWN = 0,
     DC_EVENT_TYPE_READY,
+    DC_EVENT_TYPE_MESSAGE_CREATE,
 
+    /* ^^^^^^ Make sure events are up there ^^^^^^^ */
     DC_EVENT_TYPE_LAST,
 } dc_event_type_t;
 

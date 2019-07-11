@@ -44,6 +44,7 @@ struct dc_channel_
      */
     char *application_id;
 
+    GHashTable *messages_byid;
     GPtrArray *messages;
 };
 
@@ -69,6 +70,11 @@ static void dc_channel_free(dc_channel_t c)
         c->messages = NULL;
     }
 
+    if (c->messages_byid != NULL) {
+        g_hash_table_unref(c->messages_byid);
+        c->messages_byid = NULL;
+    }
+
     free(c);
 }
 
@@ -85,6 +91,11 @@ dc_channel_t dc_channel_new(void)
 
     c->messages = g_ptr_array_new_with_free_func(
         (GDestroyNotify)dc_unref
+        );
+
+    c->messages_byid = g_hash_table_new_full(
+        g_str_hash, g_str_equal,
+        free, dc_unref
         );
 
     return dc_ref(c);
@@ -237,6 +248,14 @@ dc_channel_type_t dc_channel_type(dc_channel_t c)
     return c->type;
 }
 
+bool dc_channel_is_dm(dc_channel_t c)
+{
+    return_if_true(c == NULL, false);
+    return (c->type == CHANNEL_TYPE_GROUP_DM ||
+            c->type == CHANNEL_TYPE_DM
+        );
+}
+
 void dc_channel_set_type(dc_channel_t c, dc_channel_type_t t)
 {
     return_if_true(c == NULL,);
@@ -292,6 +311,12 @@ void dc_channel_add_messages(dc_channel_t c, dc_message_t *m, size_t s)
     size_t i = 0;
 
     for (i = 0; i < s; i++) {
+        char const *id = dc_message_id(m[i]);
+        if (g_hash_table_contains(c->messages_byid, id)) {
+            continue;
+        }
+
+        g_hash_table_insert(c->messages_byid, strdup(id), dc_ref(m[i]));
         g_ptr_array_add(c->messages, dc_ref(m[i]));
     }
 

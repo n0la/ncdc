@@ -60,15 +60,15 @@ json_t *dc_event_payload(dc_event_t e)
 
 dc_event_type_t dc_event_type_code(dc_event_t e)
 {
-    static char const *types[] = {
-        "UNKNOWN",
-        "READY",
-        NULL
+    static char const *types[DC_EVENT_TYPE_LAST] = {
+        [DC_EVENT_TYPE_UNKNOWN] = "UNKNOWN",
+        [DC_EVENT_TYPE_READY] = "READY",
+        [DC_EVENT_TYPE_MESSAGE_CREATE] = "MESSAGE_CREATE",
     };
 
     int i = 0;
 
-    for (i = 0; types[i] != NULL; i++) {
+    for (i = 0; i < DC_EVENT_TYPE_LAST; i++) {
         if (strcmp(types[i], e->type) == 0) {
             return (dc_event_type_t)i;
         }
