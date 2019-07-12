@@ -110,16 +110,25 @@ ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
                          size_t len, void *arg)
 {
     ncdc_mainwindow_t mainwin = (ncdc_mainwindow_t)arg;
+    bool ret = false;
 
-    if (s != NULL && s[0] == '/') {
-        if (s[1] == '\0') {
-            return false;
-        }
-
-        return ncdc_dispatch(mainwin, s);
+    if (s == NULL || s[0] == '\0') {
+        return false;
     }
 
-    return false;
+    if (s[0] == '/') {
+        ret = ncdc_dispatch(mainwin, s);
+    } else {
+        wchar_t *post = calloc(wcslen(s)+6, sizeof(wchar_t));
+
+        wcscat(post, L"/post ");
+        wcscat(post, s);
+
+        ret = ncdc_dispatch(mainwin, post);
+        free(post);
+    }
+
+    return ret;
 }
 
 static void ncdc_mainwindow_resize(ncdc_mainwindow_t n)
@@ -330,4 +339,14 @@ void ncdc_mainwindow_leftview(ncdc_mainwindow_t n)
 {
     return_if_true(n == NULL,);
     n->curview = (n->curview - 1) % n->views->len;
+}
+
+dc_channel_t ncdc_mainwindow_current_channel(ncdc_mainwindow_t n)
+{
+    return_if_true(n == NULL, NULL);
+    ncdc_textview_t view = g_ptr_array_index(n->views, n->curview);
+    /* can't post to the log channel, that's for internal use only
+     */
+    return_if_true(view == n->log, NULL);
+    return ncdc_textview_channel(view);
 }

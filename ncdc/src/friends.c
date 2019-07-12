@@ -2,7 +2,8 @@
 #include <ncdc/ncdc.h>
 
 static bool
-ncdc_cmd_friends_list(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
+ncdc_cmd_friends_list(ncdc_mainwindow_t n, size_t ac,
+                      wchar_t **av, wchar_t const *f)
 {
     size_t i = 0;
     char c = ' ';
@@ -23,7 +24,8 @@ ncdc_cmd_friends_list(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
 }
 
 static bool
-ncdc_cmd_friends_add(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
+ncdc_cmd_friends_add(ncdc_mainwindow_t n, size_t ac,
+                     wchar_t **av, wchar_t const *f)
 {
     char *name = NULL;
     dc_account_t friend = NULL;
@@ -60,7 +62,8 @@ cleanup:
 }
 
 static bool
-ncdc_cmd_friends_remove(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
+ncdc_cmd_friends_remove(ncdc_mainwindow_t n, size_t ac,
+                        wchar_t **av, wchar_t const *f)
 {
     char *name = NULL;
     dc_account_t friend = NULL;
@@ -104,7 +107,8 @@ cleanup:
 }
 
 static bool
-ncdc_cmd_friends_accept(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
+ncdc_cmd_friends_accept(ncdc_mainwindow_t n, size_t ac,
+                        wchar_t **av, wchar_t const *f)
 {
     char *name = NULL;
     dc_account_t friend = NULL;
@@ -156,7 +160,8 @@ static ncdc_commands_t subcmds[] = {
     { NULL,     NULL }
 };
 
-bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
+bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac,
+                      wchar_t **av, wchar_t const *f)
 {
     wchar_t *subcmd = NULL;
     ncdc_commands_t *it = NULL;
@@ -167,7 +172,7 @@ bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
     }
 
     if (ac <= 1) {
-        return ncdc_cmd_friends_list(n, ac, av);
+        return ncdc_cmd_friends_list(n, ac, av, f);
     }
 
     subcmd = av[1];
@@ -180,5 +185,5 @@ bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
         return false;
     }
 
-    return it->handler(n, ac, av);
+    return it->handler(n, ac, av, f);
 }

@@ -10,6 +10,7 @@ struct dc_message_;
 typedef struct dc_message_ *dc_message_t;
 
 dc_message_t dc_message_new(void);
+dc_message_t dc_message_new_content(char const *s, int len);
 dc_message_t dc_message_from_json(json_t *j);
 json_t *dc_message_to_json(dc_message_t m);
 

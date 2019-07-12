@@ -227,6 +227,12 @@ bool dc_session_has_token(dc_session_t s)
     return dc_account_has_token(s->login);
 }
 
+dc_api_t dc_session_api(dc_session_t s)
+{
+    return_if_true(s == NULL, NULL);
+    return s->api;
+}
+
 dc_account_t dc_session_me(dc_session_t s)
 {
     return_if_true(s == NULL, NULL);

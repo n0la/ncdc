@@ -23,6 +23,7 @@ SET(SOURCES
   "src/mainwindow.c"
   "src/msg.c"
   "src/ncdc.c"
+  "src/post.c"
   "src/textview.c"
   "src/util.c"
   )

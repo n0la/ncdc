@@ -53,6 +53,12 @@ bool dc_session_has_token(dc_session_t s);
 dc_account_t dc_session_me(dc_session_t s);
 
 /**
+ * Return the API handle in use by the session. Do not unref the reference
+ * and if you need it for something else, dc_ref() it yourself.
+ */
+dc_api_t dc_session_api(dc_session_t s);
+
+/**
  * access to the internal account cache
  */
 void dc_session_add_account(dc_session_t s, dc_account_t u);

@@ -40,6 +40,24 @@ dc_message_t dc_message_new(void)
     return dc_ref(m);
 }
 
+dc_message_t dc_message_new_content(char const *s, int len)
+{
+    dc_message_t m = dc_message_new();
+    return_if_true(m == NULL, NULL);
+
+    if (len < 0) {
+        len = strlen(s);
+    }
+
+    m->content = strndup(s, len);
+    if (m->content == NULL) {
+        dc_unref(m);
+        return NULL;
+    }
+
+    return m;
+}
+
 dc_message_t dc_message_from_json(json_t *j)
 {
     dc_message_t m = NULL;

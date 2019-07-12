@@ -4,8 +4,14 @@
 #include <ncdc/ncdc.h>
 #include <ncdc/mainwindow.h>
 
+/**
+ * n      .. the main window handle
+ * ac,av  .. the full string parsed up along white spaces
+ * f      .. the full string, without the /command bit
+ */
 typedef bool (*ncdc_command_t)(ncdc_mainwindow_t n,
-                               size_t argc, wchar_t **argv);
+                               size_t argc, wchar_t **argv,
+                               wchar_t const *f);
 
 typedef struct {
     wchar_t const *name;
@@ -24,10 +30,11 @@ bool ncdc_dispatch(ncdc_mainwindow_t n, wchar_t const *s);
  */
 ncdc_commands_t *ncdc_find_cmd(ncdc_commands_t *cmds, wchar_t const *name);
 
-bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac, wchar_t **av);
-bool ncdc_cmd_login(ncdc_mainwindow_t n, size_t ac, wchar_t **av);
-bool ncdc_cmd_logout(ncdc_mainwindow_t n, size_t ac, wchar_t **av);
-bool ncdc_cmd_msg(ncdc_mainwindow_t n, size_t ac, wchar_t **av);
-bool ncdc_cmd_quit(ncdc_mainwindow_t n, size_t ac, wchar_t **av);
+bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
+bool ncdc_cmd_login(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
+bool ncdc_cmd_logout(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
+bool ncdc_cmd_msg(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
+bool ncdc_cmd_post(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
+bool ncdc_cmd_quit(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
 
 #endif

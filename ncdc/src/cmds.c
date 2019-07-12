@@ -6,6 +6,7 @@ ncdc_commands_t cmds[] = {
     { L"/login",   ncdc_cmd_login },
     { L"/logout",  ncdc_cmd_logout },
     { L"/msg",     ncdc_cmd_msg },
+    { L"/post",    ncdc_cmd_post },
     { L"/quit",    ncdc_cmd_quit },
     { NULL, NULL }
 };
@@ -17,6 +18,7 @@ static pthread_cond_t cnd;
 
 typedef struct {
     ncdc_commands_t *cmd;
+    wchar_t *f;
     size_t ac;
     wchar_t **av;
     ncdc_mainwindow_t mainwindow;
@@ -43,9 +45,12 @@ static void *async_dispatcher(void *arg)
             } else {
                 /* call the handler
                  */
-                item->cmd->handler(item->mainwindow, item->ac, item->av);
+                item->cmd->handler(item->mainwindow, item->ac,
+                                   item->av, item->f
+                    );
 
                 w_strfreev(item->av);
+                free(item->f);
                 free(item);
             }
         }
@@ -109,6 +114,8 @@ bool ncdc_dispatch(ncdc_mainwindow_t n, wchar_t const *s)
     wchar_t **tokens = NULL;
     ncdc_commands_t *it = NULL;
     queue_item *item = NULL;
+    wchar_t *f = NULL;
+    size_t len = 0, cmdlen = 0;
 
     tokens = w_tokenise(s);
     return_if_true(tokens == NULL, false);
@@ -121,12 +128,21 @@ bool ncdc_dispatch(ncdc_mainwindow_t n, wchar_t const *s)
         return false;
     }
 
+    /* make a complete string without the /command part
+     */
+    len = wcslen(s);
+    cmdlen = wcslen(it->name);
+    f = wcsdup(s);
+    return_if_true(f == NULL, false);
+    memmove(f, f+cmdlen, len-cmdlen);
+
     item = calloc(1, sizeof(queue_item));
 
     item->ac = w_strlenv(tokens);
     item->av = tokens;
     item->cmd = it;
     item->mainwindow = n;
+    item->f = f;
 
     pthread_mutex_lock(&mtx);
     g_queue_push_tail(queue, item);
@@ -136,7 +152,8 @@ bool ncdc_dispatch(ncdc_mainwindow_t n, wchar_t const *s)
     return true;
 }
 
-bool ncdc_cmd_quit(ncdc_mainwindow_t n, size_t ac, wchar_t **av)
+bool ncdc_cmd_quit(ncdc_mainwindow_t n, size_t ac,
+                   wchar_t **av, wchar_t const *f)
 {
     exit_main();
     return true;

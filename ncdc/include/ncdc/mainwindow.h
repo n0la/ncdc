@@ -15,6 +15,7 @@ ncdc_mainwindow_t ncdc_mainwindow_new(void);
 void ncdc_mainwindow_log(ncdc_mainwindow_t w, wchar_t const *fmt, ...);
 
 GPtrArray *ncdc_mainwindow_views(ncdc_mainwindow_t n);
+dc_channel_t ncdc_mainwindow_current_channel(ncdc_mainwindow_t n);
 void ncdc_mainwindow_switchview(ncdc_mainwindow_t n, int idx);
 
 void ncdc_mainwindow_refresh(ncdc_mainwindow_t n);

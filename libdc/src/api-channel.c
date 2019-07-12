@@ -2,6 +2,36 @@
 
 #include "internal.h"
 
+bool dc_api_post_message(dc_api_t api, dc_account_t login,
+                         dc_channel_t c, dc_message_t m)
+{
+    bool ret = false;
+    char *url = NULL;
+    json_t *j = NULL, *reply = NULL;
+
+    return_if_true(api == NULL || login == NULL || m == NULL, false);
+    return_if_true(dc_message_content(m) == NULL, false);
+
+    asprintf(&url, "channels/%s/messages", dc_channel_id(c));
+    goto_if_true(url == NULL, cleanup);
+
+    j = dc_message_to_json(m);
+    goto_if_true(j == NULL, cleanup);
+
+    reply = dc_api_call_sync(api, "POST", TOKEN(login), url, j);
+    goto_if_true(reply != NULL, cleanup);
+
+    ret = true;
+
+cleanup:
+
+    free(url);
+    json_decref(j);
+    json_decref(reply);
+
+    return ret;
+}
+
 bool dc_api_get_messages(dc_api_t api, dc_account_t login, dc_channel_t c)
 {
     bool ret = false;
