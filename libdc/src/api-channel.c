@@ -2,6 +2,40 @@
 
 #include "internal.h"
 
+bool dc_api_channel_ack(dc_api_t api, dc_account_t login,
+                        dc_channel_t c, dc_message_t m)
+{
+    bool ret = false;
+    char *url = NULL;
+    json_t *reply = NULL, *j = NULL;
+
+    return_if_true(api == NULL || login == NULL ||
+                   c == NULL || m == NULL, false);
+
+    asprintf(&url, "channels/%s/messages/%s/ack",
+             dc_channel_id(c),
+             dc_message_id(m)
+        );
+    goto_if_true(url == NULL, cleanup);
+
+    j = json_object();
+    goto_if_true(j == NULL, cleanup);
+    json_object_set_new(j, "token", json_string(TOKEN(login)));
+
+    reply = dc_api_call_sync(api, "POST", TOKEN(login), url, j);
+    goto_if_true(reply != NULL, cleanup);
+
+    ret = true;
+
+cleanup:
+
+    free(url);
+    json_decref(reply);
+    json_decref(j);
+
+    return ret;
+}
+
 bool dc_api_post_message(dc_api_t api, dc_account_t login,
                          dc_channel_t c, dc_message_t m)
 {

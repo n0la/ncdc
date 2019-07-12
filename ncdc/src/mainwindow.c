@@ -119,7 +119,7 @@ ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
     if (s[0] == '/') {
         ret = ncdc_dispatch(mainwin, s);
     } else {
-        wchar_t *post = calloc(wcslen(s)+6, sizeof(wchar_t));
+        wchar_t *post = calloc(wcslen(s)+7, sizeof(wchar_t));
 
         wcscat(post, L"/post ");
         wcscat(post, s);
@@ -202,6 +202,8 @@ static void ncdc_mainwindow_render_status(ncdc_mainwindow_t n)
     FILE *f = open_wmemstream(&status, &statuslen);
     wchar_t const *wintitle = NULL;
     ncdc_textview_t view = NULL;
+    size_t i = 0;
+    dc_channel_t channel = NULL;
 
     werase(n->sep1);
     return_if_true(f == NULL,);
@@ -221,8 +223,18 @@ static void ncdc_mainwindow_render_status(ncdc_mainwindow_t n)
     fwprintf(f, L" [%d: %ls]", n->curview,
              (wintitle != NULL ? wintitle : L"n/a")
         );
-    fclose(f);
 
+    fwprintf(f, L" [Act:");
+    for (i = 0; i < n->views->len; i++) {
+        view = g_ptr_array_index(n->views, i);
+        channel = ncdc_textview_channel(view);
+        if (channel != NULL && dc_channel_has_new_messages(channel)) {
+            fwprintf(f, L" %d", i);
+        }
+    }
+    fwprintf(f, L"]");
+
+    fclose(f);
     mvwaddwstr(n->sep1, 0, 0, status);
     free(status);
 }
@@ -287,6 +299,7 @@ void ncdc_mainwindow_switchview(ncdc_mainwindow_t n, int idx)
 {
     return_if_true(n == NULL || n->views == NULL,);
     return_if_true(idx >= n->views->len,);
+
     n->curview = idx;
 }
 
@@ -329,16 +342,33 @@ void ncdc_mainwindow_log(ncdc_mainwindow_t w, wchar_t const *fmt, ...)
     ncdc_textview_append(w->log, buf);
 }
 
+static void ncdc_mainwindow_ack_view(ncdc_mainwindow_t n)
+{
+#if 0
+    dc_channel_t c = ncdc_mainwindow_current_channel(n);
+    return_if_true(c == NULL,);
+    return_if_true(dc_channel_messages(c) == 0,);
+
+    dc_message_t m = dc_channel_nth_message(c, dc_channel_messages(c)-1);
+    dc_api_channel_ack(dc_session_api(current_session),
+                       dc_session_me(current_session),
+                       c, m
+        );
+#endif
+}
+
 void ncdc_mainwindow_rightview(ncdc_mainwindow_t n)
 {
     return_if_true(n == NULL,);
     n->curview = (n->curview + 1) % n->views->len;
+    ncdc_mainwindow_ack_view(n);
 }
 
 void ncdc_mainwindow_leftview(ncdc_mainwindow_t n)
 {
     return_if_true(n == NULL,);
     n->curview = (n->curview - 1) % n->views->len;
+    ncdc_mainwindow_ack_view(n);
 }
 
 dc_channel_t ncdc_mainwindow_current_channel(ncdc_mainwindow_t n)

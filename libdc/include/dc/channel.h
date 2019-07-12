@@ -67,4 +67,7 @@ void dc_channel_add_messages(dc_channel_t c, dc_message_t *m, size_t s);
 
 bool dc_channel_compare(dc_channel_t a, dc_channel_t b);
 
+bool dc_channel_has_new_messages(dc_channel_t c);
+void dc_channel_mark_read(dc_channel_t c);
+
 #endif

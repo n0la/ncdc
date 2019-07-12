@@ -13,6 +13,7 @@ SET(SOURCES
   "include/ncdc/mainwindow.h"
   "include/ncdc/ncdc.h"
   "include/ncdc/textview.h"
+  "src/ack.c"
   "src/cmds.c"
   "src/config.c"
   "src/friends.c"

@@ -46,6 +46,7 @@ struct dc_channel_
 
     GHashTable *messages_byid;
     GPtrArray *messages;
+    bool new_messages;
 };
 
 static void dc_channel_free(dc_channel_t c)
@@ -318,6 +319,8 @@ void dc_channel_add_messages(dc_channel_t c, dc_message_t *m, size_t s)
 
         g_hash_table_insert(c->messages_byid, strdup(id), dc_ref(m[i]));
         g_ptr_array_add(c->messages, dc_ref(m[i]));
+
+        c->new_messages = true;
     }
 
     g_ptr_array_sort(c->messages, (GCompareFunc)dc_message_compare);
@@ -328,4 +331,16 @@ bool dc_channel_compare(dc_channel_t a, dc_channel_t b)
     return_if_true(a == NULL || b == NULL, false);
     return_if_true(a->id == NULL || b->id == NULL, false);
     return (strcmp(a->id, b->id) == 0);
+}
+
+bool dc_channel_has_new_messages(dc_channel_t c)
+{
+    return_if_true(c == NULL, false);
+    return c->new_messages;
+}
+
+void dc_channel_mark_read(dc_channel_t c)
+{
+    return_if_true(c == NULL,);
+    c->new_messages = false;
 }

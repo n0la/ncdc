@@ -97,6 +97,13 @@ bool dc_api_post_message(dc_api_t api, dc_account_t login,
                          dc_channel_t c, dc_message_t m);
 
 /**
+ * "ack" a channel, meaning that you have read it its contents. You must provide
+ * a message, so that discord knows which message was the last you read.
+ */
+bool dc_api_channel_ack(dc_api_t api, dc_account_t login,
+                        dc_channel_t c, dc_message_t msg);
+
+/**
  * Fetch a list of friends of the login account "login". The friends are stored
  * within the login object.
  */
