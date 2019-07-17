@@ -339,19 +339,23 @@ dc_channel_t dc_session_channel_recipients(dc_session_t s,
 
     GHashTableIter iter;
     gpointer key, value;
-    size_t i = 0, j = 0;
+    size_t i = 0;
 
     g_hash_table_iter_init(&iter, s->channels);
     while (g_hash_table_iter_next(&iter, &key, &value)) {
         dc_channel_t chan = (dc_channel_t)value;
         bool found = true;
 
+        if (dc_channel_recipients(chan) == 0) {
+            continue;
+        }
+
         if (dc_channel_recipients(chan) != sz) {
             continue;
         }
 
         for (i = 0; i < sz; i++) {
-            if (!dc_channel_has_recipient(chan, r[j])) {
+            if (!dc_channel_has_recipient(chan, r[i])) {
                 found = false;
                 break;
             }

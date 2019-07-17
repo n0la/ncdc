@@ -284,10 +284,16 @@ void dc_channel_add_recipient(dc_channel_t c, dc_account_t a)
 
 bool dc_channel_has_recipient(dc_channel_t c, dc_account_t a)
 {
+    size_t i = 0;
     return_if_true(c == NULL || a == NULL, false);
-    return g_ptr_array_find_with_equal_func(
-        c->recipients, a, (GEqualFunc)dc_account_equal, NULL
-        );
+
+    for (i = 0; i < c->recipients->len; i++) {
+        if (dc_account_equal(g_ptr_array_index(c->recipients, i), a)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 
