@@ -203,7 +203,7 @@ ncdc_textview_render_msgs(ncdc_textview_t v, WINDOW *win, int lines, int cols)
     for (i = msgs-1; i >= 0; i--) {
         dc_message_t m = dc_channel_nth_message(v->channel, i);
         wchar_t *s = ncdc_textview_format(m);
-        wchar_t const *end = s, *last = NULL;
+        wchar_t const *end = s, *last = s;
         size_t len = 0;
         size_t needed_lines = 0;
 
@@ -211,14 +211,11 @@ ncdc_textview_render_msgs(ncdc_textview_t v, WINDOW *win, int lines, int cols)
          */
         while ((end = wcschr(end, '\n')) != NULL) {
             ++needed_lines;
+            ++end;
 
-            len = wcswidth(last, (end - last));
-            needed_lines += (len % cols);
+            len = wcswidth(last, (end - last - 1));
+            needed_lines += (len / cols);
             last = end;
-        }
-
-        if (last == NULL) {
-            last = s;
         }
 
         len = wcswidth(last, wcslen(last));
