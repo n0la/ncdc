@@ -155,7 +155,7 @@ int main(int ac, char **av)
         return 3;
     }
 
-    asprintf(&ncdc_private_dir, "%s/.ncdc", getenv("HOME"));
+    asprintf(&ncdc_private_dir, "%s/.config/ncdc", getenv("HOME"));
     if (mkdir(ncdc_private_dir, 0755) < 0) {
         if (errno != EEXIST) {
             fprintf(stderr, "failed to make %s: %s\n", ncdc_private_dir,
