@@ -105,6 +105,46 @@ static void ncdc_input_enter(ncdc_input_t input)
     input->cursor = 0;
 }
 
+void ncdc_input_kill_word_left(ncdc_input_t input)
+{
+    ssize_t i = 0, j = 0;
+
+    return_if_true(input->cursor == 0,);
+    return_if_true(input->buffer->len == 0,);
+
+    i = input->cursor;
+    if (i == input->buffer->len) {
+        --i;
+    }
+
+    for (; i >= 0 && iswspace(g_array_index(input->buffer, wchar_t, i)); i--, j++)
+        ;
+    for (; i >= 0 && !iswspace(g_array_index(input->buffer, wchar_t, i)); i--, j++)
+        ;
+
+    if (i < 0) {
+        i = 0;
+    }
+
+    g_array_remove_range(input->buffer, i, j);
+    input->cursor = i;
+}
+
+void ncdc_input_kill_left(ncdc_input_t input)
+{
+    return_if_true(input->cursor == 0,);
+    g_array_remove_range(input->buffer, 0, input->cursor);
+    input->cursor = 0;
+}
+
+void ncdc_input_kill_right(ncdc_input_t input)
+{
+    return_if_true(input->cursor == input->buffer->len,);
+    g_array_remove_range(input->buffer, input->cursor,
+                         input->buffer->len - input->cursor
+        );
+}
+
 void ncdc_input_delete(ncdc_input_t input)
 {
     return_if_true(input->cursor == input->buffer->len,);

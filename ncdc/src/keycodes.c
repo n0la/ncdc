@@ -9,7 +9,7 @@ ncdc_find_keybinding(ncdc_keybinding_t *keys, wchar_t const *key, size_t l)
     size_t i = 0;
 
     for (i = 0; keys[i].name != NULL; i++) {
-        if ((l == sizeof(wchar_t) && key[0] == keys[i].key[0]) ||
+        if ((l == 1 && key[0] == keys[i].key[0]) ||
             wcscmp(key, keys[i].key) == 0) {
             return keys+i;
         }
@@ -41,6 +41,15 @@ ncdc_keybinding_t keys_emacs[] = {
     /* CTRL+B
      */
     NCDC_BINDING(L"\x02",          L"backward", ncdc_input_backward),
+    /* CTRL+K
+     */
+    NCDC_BINDING(L"\x0B",          L"kill-right", ncdc_input_kill_right),
+    /* CTRL+U
+     */
+    NCDC_BINDING(L"\x15",          L"kill-left", ncdc_input_kill_left),
+    /* CTRL+W
+     */
+    NCDC_BINDING(L"\x17",          L"kill-word-left", ncdc_input_kill_word_left),
     /* CTRL+D
      */
     NCDC_BINDING(L"\x04",          L"delete",   ncdc_input_delete),

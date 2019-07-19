@@ -21,6 +21,9 @@ void ncdc_input_set_callback(ncdc_input_t i, ncdc_input_callback_t c, void *a);
 
 /* keybinding functions
  */
+void ncdc_input_kill_right(ncdc_input_t input);
+void ncdc_input_kill_left(ncdc_input_t input);
+void ncdc_input_kill_word_left(ncdc_input_t input);
 void ncdc_input_backward(ncdc_input_t i);
 void ncdc_input_forward(ncdc_input_t i);
 void ncdc_input_delete(ncdc_input_t input);

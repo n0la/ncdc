@@ -267,10 +267,14 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
             return;
         }
         keylen = wcslen(key);
+
+        FILE *f = fopen("keys.txt", "a+");
+        fwprintf(f, L"KEY: %ls\n", key);
+        fclose(f);
     }
 
     FILE *f = fopen("keys.txt", "a+");
-    fwprintf(f, L"%d - %ls\n", i, (key == NULL ? L"n/a" : &key[1]));
+    fwprintf(f, L"%X\n", i);
     fclose(f);
 
     if (key != NULL &&
@@ -281,7 +285,7 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
 
     if (n->focus == FOCUS_INPUT) {
         if (key == NULL) {
-            ncdc_input_feed(n->in, (wchar_t const *)&i, sizeof(wchar_t));
+            ncdc_input_feed(n->in, (wchar_t const *)&i, 1);
         } else {
             ncdc_input_feed(n->in, key, wcslen(key));
         }
