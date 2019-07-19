@@ -17,6 +17,7 @@ void ncdc_treeitem_set_label(ncdc_treeitem_t i, wchar_t const *s);
 void *ncdc_treeitem_tag(ncdc_treeitem_t i);
 void ncdc_treeitem_set_tag(ncdc_treeitem_t i, void *t);
 
+size_t ncdc_treeitem_size(ncdc_treeitem_t i);
 void ncdc_treeitem_clear(ncdc_treeitem_t i);
 void ncdc_treeitem_add(ncdc_treeitem_t i, ncdc_treeitem_t c);
 void ncdc_treeitem_remove(ncdc_treeitem_t i, ncdc_treeitem_t c);

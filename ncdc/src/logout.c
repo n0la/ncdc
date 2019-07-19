@@ -21,6 +21,8 @@ bool ncdc_cmd_logout(ncdc_mainwindow_t n, size_t ac,
     dc_unref(current_session);
     current_session = NULL;
 
+    ncdc_mainwindow_update_guilds(n);
+
     LOG(n, L"logout: successfully logged out");
 
 error:

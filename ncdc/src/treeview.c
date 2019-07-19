@@ -22,6 +22,19 @@ struct ncdc_treeitem_
     void *tag;
 };
 
+struct ncdc_treeview_
+{
+    dc_refable_t ref;
+
+    /* root element
+     */
+    ncdc_treeitem_t root;
+
+    /* currently selected item
+     */
+    ncdc_treeitem_t current;
+};
+
 static void ncdc_treeitem_free(ncdc_treeitem_t t)
 {
     return_if_true(t == NULL,);
@@ -61,6 +74,12 @@ ncdc_treeitem_t ncdc_treeitem_new_string(wchar_t const *s)
     t->content = wcsdup(s);
 
     return t;
+}
+
+size_t ncdc_treeitem_size(ncdc_treeitem_t i)
+{
+    return_if_true(i == NULL || i->children == NULL, 0);
+    return i->children->len;
 }
 
 void ncdc_treeitem_add(ncdc_treeitem_t i, ncdc_treeitem_t c)
@@ -132,13 +151,6 @@ ncdc_treeitem_render(ncdc_treeitem_t t, WINDOW *win,
     return off;
 }
 
-struct ncdc_treeview_
-{
-    dc_refable_t ref;
-
-    ncdc_treeitem_t root;
-};
-
 static void ncdc_treeview_free(ncdc_treeview_t t)
 {
     return_if_true(t == NULL,);
@@ -158,6 +170,8 @@ ncdc_treeview_t ncdc_treeview_new(void)
 
     t->root = ncdc_treeitem_new();
     goto_if_true(t->root == NULL, error);
+
+    t->current = t->root;
 
     return dc_ref(t);
 

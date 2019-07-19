@@ -9,6 +9,7 @@ struct dc_session_
     dc_api_t api;
     dc_account_t login;
     dc_gateway_t gateway;
+    bool ready;
 
     GHashTable *accounts;
     GHashTable *channels;
@@ -161,6 +162,8 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
             dc_session_add_channel(s, chan);
         }
     }
+
+    s->ready = true;
 }
 
 static void dc_session_handler(dc_gateway_t gw, dc_event_t e, void *p)
@@ -237,6 +240,8 @@ bool dc_session_logout(dc_session_t s)
         s->gateway = NULL;
     }
 
+    s->ready = false;
+
     return true;
 }
 
@@ -247,6 +252,8 @@ bool dc_session_login(dc_session_t s, dc_account_t login)
     if (s->login != NULL) {
         dc_session_logout(s);
     }
+
+    s->ready = false;
 
     s->login = dc_ref(login);
     if (!dc_account_has_token(login)) {
@@ -274,6 +281,12 @@ bool dc_session_has_token(dc_session_t s)
 {
     return_if_true(s == NULL || s->login == NULL, false);
     return dc_account_has_token(s->login);
+}
+
+bool dc_session_is_ready(dc_session_t s)
+{
+    return_if_true(s == NULL, false);
+    return s->ready;
 }
 
 dc_api_t dc_session_api(dc_session_t s)

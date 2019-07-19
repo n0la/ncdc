@@ -397,7 +397,6 @@ void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
 {
     ncdc_textview_t v = 0;
 
-    ncdc_mainwindow_update_guilds(n);
     ncdc_treeview_render(n->guildview, n->guilds, n->guilds_h, n->guilds_w);
     wnoutrefresh(n->guilds);
 

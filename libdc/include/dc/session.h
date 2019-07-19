@@ -45,6 +45,12 @@ bool dc_session_logout(dc_session_t s);
  */
 bool dc_session_login(dc_session_t s, dc_account_t login);
 
+/**
+ * Returns true if the session is ready, i.e. a login has been performed
+ * and the READY event has been parsed from the websocket.
+ */
+bool dc_session_is_ready(dc_session_t s);
+
 bool dc_session_has_token(dc_session_t s);
 
 /**
