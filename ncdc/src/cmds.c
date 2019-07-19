@@ -2,6 +2,7 @@
 
 ncdc_commands_t cmds[] = {
     { L"/ack",      ncdc_cmd_ack },
+    { L"/connect",  ncdc_cmd_login },
     { L"/friend",   ncdc_cmd_friends },
     { L"/friends",  ncdc_cmd_friends },
     { L"/login",    ncdc_cmd_login },
