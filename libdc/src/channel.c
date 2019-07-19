@@ -124,7 +124,7 @@ dc_channel_t dc_channel_from_json(json_t *j)
     }
 
     v = json_object_get(j, "name");
-    if (v == NULL && json_is_string(v)) {
+    if (v != NULL && json_is_string(v)) {
         c->name = strdup(json_string_value(v));
     }
 
@@ -235,6 +235,12 @@ json_t *dc_channel_to_json(dc_channel_t c)
     }
 
     return j;
+}
+
+char const *dc_channel_name(dc_channel_t c)
+{
+    return_if_true(c == NULL, NULL);
+    return c->name;
 }
 
 char const *dc_channel_id(dc_channel_t c)

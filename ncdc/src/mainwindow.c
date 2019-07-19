@@ -1,6 +1,7 @@
 #include <ncdc/mainwindow.h>
 #include <ncdc/input.h>
 #include <ncdc/textview.h>
+#include <ncdc/treeview.h>
 #include <ncdc/cmds.h>
 #include <ncdc/ncdc.h>
 
@@ -37,6 +38,8 @@ struct ncdc_mainwindow_
     WINDOW *sep2;
 
     ncdc_input_t in;
+    ncdc_treeview_t guildview;
+    ncdc_treeitem_t root;
 
     GPtrArray *views;
     int curview;
@@ -62,6 +65,7 @@ static void ncdc_mainwindow_free(ncdc_mainwindow_t n)
     delwin(n->sep2);
 
     dc_unref(n->in);
+    dc_unref(n->guildview);
 
     if (n->views != NULL) {
         g_ptr_array_unref(n->views);
@@ -80,6 +84,9 @@ ncdc_mainwindow_t ncdc_mainwindow_new(void)
 
     ptr->in = ncdc_input_new();
     ncdc_input_set_callback(ptr->in, ncdc_mainwindow_callback, ptr);
+
+    ptr->guildview = ncdc_treeview_new();
+    ptr->root = ncdc_treeview_root(ptr->guildview);
 
     ptr->views = g_ptr_array_new_with_free_func(
         (GDestroyNotify)dc_unref
@@ -134,7 +141,7 @@ ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
 static void ncdc_mainwindow_resize(ncdc_mainwindow_t n)
 {
     n->guilds_h = LINES - 2;
-    n->guilds_w = (COLS / 5);
+    n->guilds_w = (COLS / 4);
     n->guilds_y = 0;
     n->guilds_x = 0;
 
@@ -239,6 +246,85 @@ static void ncdc_mainwindow_render_status(ncdc_mainwindow_t n)
     free(status);
 }
 
+void ncdc_mainwindow_update_guilds(ncdc_mainwindow_t n)
+{
+    GHashTableIter iter;
+    gpointer key = NULL, value = NULL;
+    size_t idx = 0;
+
+    ncdc_treeitem_clear(n->root);
+
+    if (!is_logged_in()) {
+        return;
+    }
+
+    g_hash_table_iter_init(&iter, dc_session_guilds(current_session));
+    while (g_hash_table_iter_next(&iter, &key, &value)) {
+        dc_guild_t g = (dc_guild_t)value;
+        ncdc_treeitem_t i = ncdc_treeitem_new();
+        wchar_t *name = NULL;
+
+        if (i == NULL) {
+            continue;
+        }
+
+        name = s_convert(dc_guild_name(g));
+        if (name == NULL) {
+            continue;
+        }
+
+        ncdc_treeitem_set_label(i, name);
+
+        free(name);
+        name = NULL;
+
+        ncdc_treeitem_set_tag(i, g);
+
+        /* add subchannels
+         */
+        for (idx = 0; idx < dc_guild_channels(g); idx++) {
+            dc_channel_t c = dc_guild_nth_channel(g, idx);
+            ncdc_treeitem_t ci = NULL;
+
+            if (dc_channel_name(c) == NULL ||
+                dc_channel_id(c) == NULL) {
+                continue;
+            }
+
+            /* skip categories, and shop channels
+             */
+            if (dc_channel_type(c) == CHANNEL_TYPE_GUILD_CATEGORY ||
+                dc_channel_type(c) == CHANNEL_TYPE_GUILD_NEWS ||
+                dc_channel_type(c) == CHANNEL_TYPE_GUILD_STORE) {
+                continue;
+            }
+
+            ci = ncdc_treeitem_new();
+            if (ci == NULL) {
+                continue;
+            }
+
+            aswprintf(&name, L"[%s] %s",
+                      (dc_channel_type(c) == CHANNEL_TYPE_GUILD_VOICE ?
+                       "<" : "#"),
+                      dc_channel_name(c)
+                );
+            if (name == NULL) {
+                continue;
+            }
+
+            ncdc_treeitem_set_label(ci, name);
+            free(name);
+            name = NULL;
+
+            ncdc_treeitem_set_tag(ci, c);
+            ncdc_treeitem_add(i, ci);
+        }
+
+        ncdc_treeitem_add(n->root, i);
+    }
+}
+
 void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
 {
     wint_t i = 0;
@@ -311,6 +397,8 @@ void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
 {
     ncdc_textview_t v = 0;
 
+    ncdc_mainwindow_update_guilds(n);
+    ncdc_treeview_render(n->guildview, n->guilds, n->guilds_h, n->guilds_w);
     wnoutrefresh(n->guilds);
 
     /* render active text view

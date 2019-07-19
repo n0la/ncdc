@@ -24,4 +24,6 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n);
 void ncdc_mainwindow_rightview(ncdc_mainwindow_t n);
 void ncdc_mainwindow_leftview(ncdc_mainwindow_t n);
 
+void ncdc_mainwindow_update_guilds(ncdc_mainwindow_t n);
+
 #endif

@@ -8,6 +8,7 @@
 #include <dc/account.h>
 #include <dc/channel.h>
 #include <dc/gateway.h>
+#include <dc/guild.h>
 
 /**
  * A session object will contain all information gathered after a user
@@ -85,6 +86,12 @@ dc_channel_t dc_session_make_channel(dc_session_t s, dc_account_t *r,
  */
 dc_channel_t dc_session_channel_recipients(dc_session_t s,
                                            dc_account_t *r, size_t sz);
+
+/**
+ * Add a guild to be managed by this session.
+ */
+void dc_session_add_guild(dc_session_t s, dc_guild_t g);
+GHashTable *dc_session_guilds(dc_session_t s);
 
 /**
  * comparision functions for sorting, and finding

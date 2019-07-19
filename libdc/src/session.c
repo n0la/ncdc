@@ -12,6 +12,7 @@ struct dc_session_
 
     GHashTable *accounts;
     GHashTable *channels;
+    GHashTable *guilds;
 };
 
 /* event handlers
@@ -38,6 +39,11 @@ static void dc_session_free(dc_session_t s)
     if (s->channels != NULL) {
         g_hash_table_unref(s->channels);
         s->channels = NULL;
+    }
+
+    if (s->guilds != NULL) {
+        g_hash_table_unref(s->guilds);
+        s->guilds = NULL;
     }
 
     dc_session_logout(s);
@@ -79,6 +85,7 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
     size_t idx = 0;
     json_t *c = NULL;
     json_t *channels = NULL;
+    json_t *guilds = NULL;
 
     /* retrieve user information about ourselves, including snowflake,
      * discriminator, and other things
@@ -124,6 +131,17 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
             continue_if_true(acc == NULL);
 
             dc_account_set_status(acc, json_string_value(status));
+        }
+    }
+
+    /* load guilds
+     */
+    guilds = json_object_get(r, "guilds");
+    if (guilds != NULL && json_is_array(guilds)) {
+        json_array_foreach(guilds, idx, c) {
+            dc_guild_t guild = dc_guild_from_json(c);
+            continue_if_true(guild == NULL);
+            dc_session_add_guild(s, guild);
         }
     }
 
@@ -178,6 +196,11 @@ dc_session_t dc_session_new(dc_loop_t loop)
 
     s->channels = g_hash_table_new_full(g_str_hash, g_str_equal,
                                         free, dc_unref
+        );
+    goto_if_true(s->channels == NULL, error);
+
+    s->guilds = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                      free, dc_unref
         );
     goto_if_true(s->channels == NULL, error);
 
@@ -393,4 +416,24 @@ dc_channel_t dc_session_channel_recipients(dc_session_t s,
     }
 
     return NULL;
+}
+
+GHashTable *dc_session_guilds(dc_session_t s)
+{
+    return_if_true(s == NULL, NULL);
+    return s->guilds;
+}
+
+void dc_session_add_guild(dc_session_t s, dc_guild_t g)
+{
+    return_if_true(s == NULL || g == NULL,);
+    return_if_true(dc_guild_id(g) == NULL,);
+
+    char const *id = dc_guild_id(g);
+
+    if (!g_hash_table_contains(s->guilds, id)) {
+        g_hash_table_insert(s->guilds, strdup(id), dc_ref(g));
+        /* TODO: dedup for saving storage
+         */
+    }
 }

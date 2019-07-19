@@ -21,27 +21,27 @@ typedef enum {
 
     /* A direct message channel for 1:1 communication
      */
-    CHANNEL_TYPE_DM,
+    CHANNEL_TYPE_DM = 1,
 
     /* A guild voice channel
      */
-    CHANNEL_TYPE_GUILD_VOICE,
+    CHANNEL_TYPE_GUILD_VOICE = 2,
 
     /* Group direct message channel 1:N communication
      */
-    CHANNEL_TYPE_GROUP_DM,
+    CHANNEL_TYPE_GROUP_DM = 3,
 
     /* Category within a GUILD
      */
-    CHANNEL_TYPE_GUILD_CATEGORY,
+    CHANNEL_TYPE_GUILD_CATEGORY = 4,
 
     /* News channel
      */
-    CHANNEL_TYPE_GUILD_NEWS,
+    CHANNEL_TYPE_GUILD_NEWS = 5,
 
     /* Guild store, no idea what this is
      */
-    CHANNEL_TYPE_GUILD_STORE,
+    CHANNEL_TYPE_GUILD_STORE = 6,
 } dc_channel_type_t;
 
 struct dc_channel_;
@@ -51,6 +51,7 @@ dc_channel_t dc_channel_new(void);
 dc_channel_t dc_channel_from_json(json_t *j);
 
 char const *dc_channel_id(dc_channel_t c);
+char const *dc_channel_name(dc_channel_t c);
 
 dc_channel_type_t dc_channel_type(dc_channel_t c);
 bool dc_channel_is_dm(dc_channel_t c);

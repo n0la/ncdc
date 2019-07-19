@@ -13,6 +13,7 @@ SET(SOURCES
   "include/ncdc/mainwindow.h"
   "include/ncdc/ncdc.h"
   "include/ncdc/textview.h"
+  "include/ncdc/treeview.h"
   "src/ack.c"
   "src/cmds.c"
   "src/config.c"
@@ -26,6 +27,7 @@ SET(SOURCES
   "src/ncdc.c"
   "src/post.c"
   "src/textview.c"
+  "src/treeview.c"
   "src/util.c"
   )
 
