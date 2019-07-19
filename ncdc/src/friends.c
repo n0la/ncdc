@@ -12,11 +12,19 @@ ncdc_cmd_friends_list(ncdc_mainwindow_t n, size_t ac,
     LOG(n, L"/FRIENDS list");
     for (i = 0; i < dc_account_friends_size(current_account); i++) {
         dc_account_t acc = dc_account_nth_friend(current_account, i);
+        char const *status = dc_account_status(acc);
+
+        if (status == NULL) {
+            status = "offline";
+        }
+
         switch (dc_account_friend_state(acc)) {
+        case FRIEND_STATE_FRIEND:  c = 'F'; break;
         case FRIEND_STATE_PENDING: c = 'P'; break;
         default: c = ' '; break;
         }
-        LOG(n, L" %c %s", c, dc_account_fullname(acc));
+
+        LOG(n, L" [%c] [%-7s] %s", c, status, dc_account_fullname(acc));
     }
     LOG(n, L"End of /FRIENDS list");
 

@@ -75,6 +75,7 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
     json_t *r = dc_event_payload(e);
     json_t *user = NULL;
     json_t *relationships = NULL;
+    json_t *presences = NULL;
     size_t idx = 0;
     json_t *c = NULL;
     json_t *channels = NULL;
@@ -104,6 +105,28 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
         }
     }
 
+    /* check presences
+     */
+    presences = json_object_get(r, "presences");
+    if (presences != NULL && json_is_array(presences)) {
+        json_array_foreach(presences, idx, c) {
+            json_t *user = NULL, *id = NULL, *status = NULL;
+            dc_account_t acc = NULL;
+
+            user = json_object_get(c, "user");
+            continue_if_true(user == NULL || !json_is_object(user));
+            id = json_object_get(user, "id");
+            continue_if_true(id == NULL || !json_is_string(id));
+            status = json_object_get(c, "status");
+            continue_if_true(s == NULL || !json_is_string(status));
+
+            acc = g_hash_table_lookup(s->accounts, json_string_value(id));
+            continue_if_true(acc == NULL);
+
+            dc_account_set_status(acc, json_string_value(status));
+        }
+    }
+
     /* load channels
      */
     channels = json_object_get(r, "private_channels");
@@ -113,6 +136,9 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
             if (chan == NULL) {
                 continue;
             }
+
+            /* TODO: dedup recipients
+             */
 
             dc_session_add_channel(s, chan);
         }

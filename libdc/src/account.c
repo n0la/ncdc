@@ -26,6 +26,9 @@ struct dc_account_
     /* full username username#discriminator
      */
     char *full;
+    /* online/offline status
+     */
+    char *status;
 
     /* authentication token
      */
@@ -50,6 +53,7 @@ static void dc_account_free(dc_account_t ptr)
     free(ptr->discriminator);
     free(ptr->full);
     free(ptr->token);
+    free(ptr->status);
 
     if (ptr->friends != NULL) {
         g_ptr_array_unref(ptr->friends);
@@ -149,9 +153,9 @@ dc_account_t dc_account_from_relationship(json_t *j)
         goto error;
     }
 
-    val = json_object_get(j, "type");
-    if (val != NULL && json_is_integer(val)) {
-        dc_account_set_friend_state(user, json_integer_value(val));
+    val = json_object_get(j, "status");
+    if (val != NULL && json_is_string(val)) {
+        dc_account_set_status(user, json_string_value(val));
     }
 
     return user;
@@ -311,6 +315,19 @@ char const *dc_account_fullname(dc_account_t a)
 {
     return_if_true(a == NULL, NULL);
     return a->full;
+}
+
+char const *dc_account_status(dc_account_t a)
+{
+    return_if_true(a == NULL, NULL);
+    return a->status;
+}
+
+void dc_account_set_status(dc_account_t a, char const *s)
+{
+    return_if_true(a == NULL || s == NULL,);
+    free(a->status);
+    a->status = strdup(s);
 }
 
 bool dc_account_equal(dc_account_t a, dc_account_t b)

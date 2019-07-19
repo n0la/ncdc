@@ -29,6 +29,7 @@
 
 #define return_if_true(v,r) do { if (v) return r; } while(0)
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)
+#define continue_if_true(v) if (v) continue
 
 #define TOKEN(l) (dc_account_token(l))
 
