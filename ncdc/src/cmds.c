@@ -136,9 +136,11 @@ bool ncdc_dispatch(ncdc_mainwindow_t n, wchar_t const *s)
      */
     len = wcslen(s);
     cmdlen = wcslen(it->name);
+
     f = wcsdup(s);
     return_if_true(f == NULL, false);
-    memmove(f, f+cmdlen, len-cmdlen);
+    memmove(f, f+cmdlen, (len-cmdlen) * sizeof(wchar_t));
+    f[len-cmdlen] = '\0';
 
     item = calloc(1, sizeof(queue_item));
 
