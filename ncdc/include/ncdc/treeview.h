@@ -16,6 +16,7 @@ void ncdc_treeitem_set_label(ncdc_treeitem_t i, wchar_t const *s);
 
 void *ncdc_treeitem_tag(ncdc_treeitem_t i);
 void ncdc_treeitem_set_tag(ncdc_treeitem_t i, void *t);
+ncdc_treeitem_t ncdc_treeitem_parent(ncdc_treeitem_t i);
 
 size_t ncdc_treeitem_size(ncdc_treeitem_t i);
 void ncdc_treeitem_clear(ncdc_treeitem_t i);
@@ -27,6 +28,7 @@ typedef struct ncdc_treeview_ *ncdc_treeview_t;
 
 ncdc_treeview_t ncdc_treeview_new(void);
 ncdc_treeitem_t ncdc_treeview_root(ncdc_treeview_t t);
+ncdc_treeitem_t ncdc_treeview_current(ncdc_treeview_t t);
 void ncdc_treeview_render(ncdc_treeview_t t, WINDOW *w, int lines, int cols);
 
 /* move the cursor around, and collapse/expand items

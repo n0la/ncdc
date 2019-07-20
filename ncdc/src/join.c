@@ -20,7 +20,7 @@ ncdc_cmd_join(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f)
         return false;
     }
 
-    if (ac == 2) {
+    if (ac == 3) {
         guild = w_convert(av[1]);
         channel = w_convert(av[2]);
 
@@ -35,7 +35,7 @@ ncdc_cmd_join(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f)
             LOG(n, L"join: no such channel %s in guild %s", channel, guild);
             goto cleanup;
         }
-    } else if (ac == 1) {
+    } else if (ac == 2) {
         id = w_convert(av[1]);
 
         c = dc_session_channel_by_id(current_session, id);

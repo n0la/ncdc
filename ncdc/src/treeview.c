@@ -122,6 +122,12 @@ void ncdc_treeitem_set_tag(ncdc_treeitem_t i, void *t)
     i->tag = t;
 }
 
+ncdc_treeitem_t ncdc_treeitem_parent(ncdc_treeitem_t i)
+{
+    return_if_true(i == NULL, NULL);
+    return i->parent;
+}
+
 wchar_t const *ncdc_treeitem_label(ncdc_treeitem_t i)
 {
     return_if_true(i == NULL, NULL);
@@ -218,6 +224,12 @@ void ncdc_treeview_render(ncdc_treeview_t t, WINDOW *w, int lines, int cols)
     werase(w);
     wmove(w, 0, 0);
     ncdc_treeitem_render(t->root, w, lines, cols, 0, 0);
+}
+
+ncdc_treeitem_t ncdc_treeview_current(ncdc_treeview_t t)
+{
+    return_if_true(t == NULL, NULL);
+    return t->current;
 }
 
 ncdc_treeitem_t ncdc_treeview_root(ncdc_treeview_t t)

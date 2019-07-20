@@ -83,7 +83,7 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
     json_t *user = NULL;
     json_t *relationships = NULL;
     json_t *presences = NULL;
-    size_t idx = 0;
+    size_t idx = 0, i = 0;
     json_t *c = NULL;
     json_t *channels = NULL;
     json_t *guilds = NULL;
@@ -143,6 +143,13 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
             dc_guild_t guild = dc_guild_from_json(c);
             continue_if_true(guild == NULL);
             dc_session_add_guild(s, guild);
+
+            /* add their channels to our own thing
+             */
+            for (i = 0; i < dc_guild_channels(guild); i++) {
+                dc_channel_t chan = dc_guild_nth_channel(guild, i);
+                dc_session_add_channel(s, chan);
+            }
         }
     }
 

@@ -126,11 +126,9 @@ ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
     if (s[0] == '/') {
         ret = ncdc_dispatch(mainwin, s);
     } else {
-        wchar_t *post = calloc(wcslen(s)+7, sizeof(wchar_t));
+        wchar_t *post = NULL;
 
-        wcscat(post, L"/post ");
-        wcscat(post, s);
-
+        aswprintf(&post, L"/post %ls", s);
         ret = ncdc_dispatch(mainwin, post);
         free(post);
     }
@@ -247,6 +245,34 @@ static void ncdc_mainwindow_render_status(ncdc_mainwindow_t n)
     fclose(f);
     mvwaddwstr(n->sep1, 0, 0, status);
     free(status);
+}
+
+static void ncdc_mainwindow_open_guildchat(ncdc_mainwindow_t n)
+{
+    ncdc_treeitem_t cur = ncdc_treeview_current(n->guildview);
+    dc_channel_t channel = NULL;
+    wchar_t *cmd = NULL;
+
+    return_if_true(cur == NULL ||
+                   /* not the root, thanks
+                    */
+                   cur == ncdc_treeview_root(n->guildview) ||
+                   /* not one root (again)
+                    */
+                   ncdc_treeitem_parent(cur) == NULL ||
+                   /* not a guild who are the first level after root
+                    */
+                   ncdc_treeitem_parent(cur) == ncdc_treeview_root(n->guildview),
+        );
+
+    channel = ncdc_treeitem_tag(cur);
+    return_if_true(channel == NULL,);
+
+    aswprintf(&cmd, L"/join %s", dc_channel_id(channel));
+    return_if_true(cmd == NULL,);
+
+    ncdc_dispatch(n, cmd);
+    free(cmd);
 }
 
 void ncdc_mainwindow_update_guilds(ncdc_mainwindow_t n)
@@ -378,7 +404,7 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
     {
         if (key != NULL &&
             (k = ncdc_find_keybinding(keys_chat, key, keylen)) != NULL) {
-            k->handler(n->guildview);
+            k->handler(n->chat);
         }
     } break;
 
@@ -387,6 +413,8 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
         if (key != NULL &&
             (k = ncdc_find_keybinding(keys_guilds, key, keylen)) != NULL) {
             k->handler(n->guildview);
+        } else if (i == '\r') {
+            ncdc_mainwindow_open_guildchat(n);
         }
     } break;
 
@@ -472,6 +500,7 @@ ncdc_textview_t
 ncdc_mainwindow_switch_or_add(ncdc_mainwindow_t n, dc_channel_t c)
 {
     ncdc_textview_t v = NULL;
+    wchar_t *name = NULL;
 
     return_if_true(n == NULL || c == NULL, NULL);
     return_if_true(!is_logged_in(), NULL);
@@ -485,6 +514,32 @@ ncdc_mainwindow_switch_or_add(ncdc_mainwindow_t n, dc_channel_t c)
 
         ncdc_textview_set_account(v, dc_session_me(current_session));
         ncdc_textview_set_channel(v, c);
+
+        if (dc_channel_type(c) == CHANNEL_TYPE_GUILD_TEXT) {
+            aswprintf(&name, L"#%s", dc_channel_name(c));
+        } else if (dc_channel_type(c) == CHANNEL_TYPE_GUILD_VOICE) {
+            aswprintf(&name, L">%s", dc_channel_name(c));
+        } else if (dc_channel_is_dm(c)) {
+            size_t namelen = 0, i = 0;
+            FILE *f = open_wmemstream(&name, &namelen);
+
+            for (i = 0; i < dc_channel_recipients(c); i++) {
+                dc_account_t rec = dc_channel_nth_recipient(c, i);
+                if (dc_account_fullname(rec) != NULL) {
+                    fwprintf(f, L"%s", dc_account_fullname(rec));
+                    if (i < dc_channel_recipients(c)-1) {
+                        fputwc('/', f);
+                    }
+                }
+            }
+
+            fclose(f);
+        }
+
+        if (name != NULL) {
+            ncdc_textview_set_title(v, name);
+            free(name);
+        }
 
         g_ptr_array_add(n->views, v);
         ncdc_mainwindow_switch_view(n, v);
