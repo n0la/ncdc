@@ -2,6 +2,7 @@
 #define NCDC_MAINWINDOW_H
 
 #include <ncdc/ncdc.h>
+#include <ncdc/textview.h>
 #include <stdarg.h>
 
 struct ncdc_mainwindow_;
@@ -16,7 +17,12 @@ void ncdc_mainwindow_log(ncdc_mainwindow_t w, wchar_t const *fmt, ...);
 
 GPtrArray *ncdc_mainwindow_views(ncdc_mainwindow_t n);
 dc_channel_t ncdc_mainwindow_current_channel(ncdc_mainwindow_t n);
-void ncdc_mainwindow_switchview(ncdc_mainwindow_t n, int idx);
+//void ncdc_mainwindow_switchview(ncdc_mainwindow_t n, int idx);
+void ncdc_mainwindow_switch_view(ncdc_mainwindow_t n, ncdc_textview_t v);
+ncdc_textview_t ncdc_mainwindow_channel_view(ncdc_mainwindow_t n,
+                                             dc_channel_t c);
+ncdc_textview_t ncdc_mainwindow_switch_or_add(ncdc_mainwindow_t n,
+                                              dc_channel_t c);
 
 void ncdc_mainwindow_refresh(ncdc_mainwindow_t n);
 void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n);

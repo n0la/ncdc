@@ -19,6 +19,7 @@ SET(SOURCES
   "src/config.c"
   "src/friends.c"
   "src/input.c"
+  "src/join.c"
   "src/keycodes.c"
   "src/login.c"
   "src/logout.c"

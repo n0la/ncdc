@@ -13,9 +13,6 @@ bool ncdc_cmd_msg(ncdc_mainwindow_t n, size_t ac,
     dc_message_t m = NULL;
     bool ret = false;
     dc_channel_t c = NULL;
-    ncdc_textview_t v = NULL;
-    dc_account_t current_account = NULL;
-    size_t i = 0;
 
     if (!is_logged_in()) {
         LOG(n, L"msg: not logged in");
@@ -24,8 +21,6 @@ bool ncdc_cmd_msg(ncdc_mainwindow_t n, size_t ac,
 
     target = w_convert(av[1]);
     goto_if_true(target == NULL, cleanup);
-
-    current_account = dc_session_me(current_session);
 
     /* find out if the target is a friend we can contact
      */
@@ -41,30 +36,9 @@ bool ncdc_cmd_msg(ncdc_mainwindow_t n, size_t ac,
         goto cleanup;
     }
 
-    /* see if we have a channel already, that services that user
-     * if so we set v to something non-NIL and it should be good
+    /* this adds a channel, or switches to the channel if a view already exists
      */
-    for (i = 0; i < ncdc_mainwindow_views(n)->len; i++) {
-        ncdc_textview_t view = g_ptr_array_index(ncdc_mainwindow_views(n), i);
-        dc_channel_t chan = ncdc_textview_channel(view);
-
-        if (dc_channel_compare(chan, c)) {
-            ncdc_mainwindow_switchview(n, i);
-            v = view;
-            break;
-        }
-    }
-
-    if (v == NULL) {
-        v = ncdc_textview_new();
-        goto_if_true(v == NULL, cleanup);
-
-        ncdc_textview_set_account(v, current_account);
-        ncdc_textview_set_channel(v, c);
-
-        g_ptr_array_add(ncdc_mainwindow_views(n), dc_ref(v));
-        ncdc_mainwindow_switchview(n, ncdc_mainwindow_views(n)->len-1);
-    }
+    ncdc_mainwindow_switch_or_add(n, c);
 
     if (ac > 2) {
         /* also post the rest of the content as a message to the channel
@@ -90,7 +64,6 @@ bool ncdc_cmd_msg(ncdc_mainwindow_t n, size_t ac,
 cleanup:
 
     dc_unref(c);
-    dc_unref(v);
     dc_unref(m);
 
     free(target);

@@ -58,7 +58,7 @@ dc_guild_t dc_guild_from_json(json_t *j)
     g->id = strdup(json_string_value(val));
 
     /* there is a ton of more information here, that we should look
-     * add, including "member_count", "owner_id", but for channels
+     * to add, including "member_count", "owner_id", but for now "channels"
      * will do nicely
      */
     val = json_object_get(j, "channels");
@@ -89,6 +89,21 @@ dc_channel_t dc_guild_nth_channel(dc_guild_t d, size_t idx)
     return_if_true(d == NULL || d->channels == NULL, NULL);
     return_if_true(idx >= d->channels->len, NULL);
     return g_ptr_array_index(d->channels, idx);
+}
+
+dc_channel_t dc_guild_channel_by_name(dc_guild_t g, char const *name)
+{
+    return_if_true(g == NULL || name == NULL, NULL);
+    size_t i = 0;
+
+    for (i = 0; i < g->channels->len; i++) {
+        dc_channel_t c = g_ptr_array_index(g->channels, i);
+        if (strcmp(dc_channel_name(c), name) == 0) {
+            return c;
+        }
+    }
+
+    return NULL;
 }
 
 char const *dc_guild_name(dc_guild_t d)

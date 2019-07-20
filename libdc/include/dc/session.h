@@ -98,6 +98,7 @@ dc_channel_t dc_session_channel_recipients(dc_session_t s,
  */
 void dc_session_add_guild(dc_session_t s, dc_guild_t g);
 GHashTable *dc_session_guilds(dc_session_t s);
+dc_guild_t dc_session_guild_by_name(dc_session_t s, char const *name);
 
 /**
  * comparision functions for sorting, and finding

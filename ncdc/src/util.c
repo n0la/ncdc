@@ -122,7 +122,7 @@ wchar_t **w_tokenise(wchar_t const *str)
         case IN_STRING:
         {
             if (c == '"') {
-                size_t len = (p - 2 - start_of_word);
+                size_t len = (p - start_of_word);
                 wchar_t *s = wcsndup(start_of_word, len);
                 g_ptr_array_add(array, s);
                 state = DULL;

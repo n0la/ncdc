@@ -32,6 +32,7 @@ ncdc_commands_t *ncdc_find_cmd(ncdc_commands_t *cmds, wchar_t const *name);
 
 bool ncdc_cmd_ack(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
 bool ncdc_cmd_friends(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
+bool ncdc_cmd_join(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
 bool ncdc_cmd_login(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
 bool ncdc_cmd_logout(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);
 bool ncdc_cmd_msg(ncdc_mainwindow_t n, size_t ac, wchar_t **av, wchar_t const *f);

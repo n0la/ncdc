@@ -418,6 +418,16 @@ void ncdc_mainwindow_switchview(ncdc_mainwindow_t n, int idx)
     n->curview = idx;
 }
 
+void ncdc_mainwindow_switch_view(ncdc_mainwindow_t n, ncdc_textview_t v)
+{
+    return_if_true(n == NULL || n->views == NULL || v == NULL,);
+    guint idx = 0;
+
+    if (g_ptr_array_find(n->views, v, &idx)) {
+        n->curview = idx;
+    }
+}
+
 void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
 {
     ncdc_textview_t v = 0;
@@ -456,6 +466,49 @@ void ncdc_mainwindow_log(ncdc_mainwindow_t w, wchar_t const *fmt, ...)
     va_end(lst);
 
     ncdc_textview_append(w->log, buf);
+}
+
+ncdc_textview_t
+ncdc_mainwindow_switch_or_add(ncdc_mainwindow_t n, dc_channel_t c)
+{
+    ncdc_textview_t v = NULL;
+
+    return_if_true(n == NULL || c == NULL, NULL);
+    return_if_true(!is_logged_in(), NULL);
+
+    v = ncdc_mainwindow_channel_view(n, c);
+    if (v == NULL) {
+        v = ncdc_textview_new();
+        if (v == NULL) {
+            return NULL;
+        }
+
+        ncdc_textview_set_account(v, dc_session_me(current_session));
+        ncdc_textview_set_channel(v, c);
+
+        g_ptr_array_add(n->views, v);
+        ncdc_mainwindow_switch_view(n, v);
+    }
+
+    ncdc_mainwindow_switch_view(n, v);
+    return v;
+}
+
+ncdc_textview_t
+ncdc_mainwindow_channel_view(ncdc_mainwindow_t n, dc_channel_t c)
+{
+    size_t i = 0;
+
+    for (i = 0; i < n->views->len; i++) {
+        ncdc_textview_t v = g_ptr_array_index(n->views, i);
+        dc_channel_t vc = ncdc_textview_channel(v);
+
+        if (dc_channel_compare(vc, c)) {
+            return v;
+        }
+    }
+
+    return NULL;
 }
 
 static void ncdc_mainwindow_ack_view(ncdc_mainwindow_t n)

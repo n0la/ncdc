@@ -5,6 +5,7 @@ ncdc_commands_t cmds[] = {
     { L"/connect",  ncdc_cmd_login },
     { L"/friend",   ncdc_cmd_friends },
     { L"/friends",  ncdc_cmd_friends },
+    { L"/join",     ncdc_cmd_join },
     { L"/login",    ncdc_cmd_login },
     { L"/logout",   ncdc_cmd_logout },
     { L"/markread", ncdc_cmd_ack },

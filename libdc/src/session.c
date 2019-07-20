@@ -450,3 +450,21 @@ void dc_session_add_guild(dc_session_t s, dc_guild_t g)
          */
     }
 }
+
+dc_guild_t dc_session_guild_by_name(dc_session_t s, char const *name)
+{
+    return_if_true(s == NULL || s->guilds == NULL || name == NULL, NULL);
+
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init(&iter, s->guilds);
+    while (g_hash_table_iter_next(&iter, &key, &value)) {
+        dc_guild_t g = (dc_guild_t)value;
+        if (strcmp(dc_guild_name(g), name) == 0) {
+            return g;
+        }
+    }
+
+    return NULL;
+}
