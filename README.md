@@ -75,13 +75,11 @@ and perhaps the odd event that has occoured.
 | F3          | switch to chat view   | globally       |
 | ALT+LEFT    | previous text view    | globally       |
 | ALT+RIGHT   | next text view        | globally       |
-|-------------|-----------------------|----------------|
 | LEFT        | collapse tree item    | guilds         |
 | RIGHT       | expand tree item      | guilds         |
 | UP          | previous tree item    | guilds         |
 | DOWN        | next tree item        | guilds         |
 | ENTER       | open selected channel | guilds         |
-|-------------|-----------------------|----------------|
 | LEFT, RIGHT | move cursor           | input          |
 | C-w         | kill word left        | input          |
 | C-u         | kill all left         | input          |
