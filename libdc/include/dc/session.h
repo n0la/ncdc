@@ -76,6 +76,8 @@ dc_account_t dc_session_account_fullname(dc_session_t s, char const *f);
  */
 void dc_session_add_channel(dc_session_t s, dc_channel_t u);
 
+dc_channel_t dc_session_channel_by_id(dc_session_t s, char const *snowflake);
+
 /**
  * Creates a new channel, or returns an existing channel if a channel with
  * these recipients already exists.

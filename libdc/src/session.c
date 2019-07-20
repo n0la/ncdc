@@ -346,6 +346,12 @@ dc_account_t dc_session_account_fullname(dc_session_t s, char const *f)
     return NULL;
 }
 
+dc_channel_t dc_session_channel_by_id(dc_session_t s, char const *snowflake)
+{
+    return_if_true(s == NULL || snowflake == NULL, NULL);
+    return (dc_channel_t)g_hash_table_lookup(s->channels, snowflake);
+}
+
 void dc_session_add_channel(dc_session_t s, dc_channel_t u)
 {
     return_if_true(s == NULL || u == NULL,);
