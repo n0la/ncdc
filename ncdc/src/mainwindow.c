@@ -251,12 +251,15 @@ void ncdc_mainwindow_update_guilds(ncdc_mainwindow_t n)
     GHashTableIter iter;
     gpointer key = NULL, value = NULL;
     size_t idx = 0;
+    GHashTable *parents = NULL;
 
     ncdc_treeitem_clear(n->root);
 
     if (!is_logged_in()) {
         return;
     }
+
+    parents = g_hash_table_new(g_str_hash, g_str_equal);
 
     g_hash_table_iter_init(&iter, dc_session_guilds(current_session));
     while (g_hash_table_iter_next(&iter, &key, &value)) {
@@ -291,38 +294,48 @@ void ncdc_mainwindow_update_guilds(ncdc_mainwindow_t n)
                 continue;
             }
 
-            /* skip categories, and shop channels
-             */
-            if (dc_channel_type(c) == CHANNEL_TYPE_GUILD_CATEGORY ||
-                dc_channel_type(c) == CHANNEL_TYPE_GUILD_NEWS ||
-                dc_channel_type(c) == CHANNEL_TYPE_GUILD_STORE) {
-                continue;
-            }
-
             ci = ncdc_treeitem_new();
             if (ci == NULL) {
                 continue;
             }
 
-            aswprintf(&name, L"[%s] %s",
-                      (dc_channel_type(c) == CHANNEL_TYPE_GUILD_VOICE ?
-                       "<" : "#"),
-                      dc_channel_name(c)
-                );
+            if (dc_channel_type(c) == CHANNEL_TYPE_GUILD_VOICE ||
+                dc_channel_type(c) == CHANNEL_TYPE_GUILD_TEXT) {
+                aswprintf(&name, L"[%s] %s",
+                          (dc_channel_type(c) == CHANNEL_TYPE_GUILD_VOICE ?
+                           "<" : "#"),
+                          dc_channel_name(c)
+                    );
+            } else {
+                aswprintf(&name, L"%s", dc_channel_name(c));
+            }
             if (name == NULL) {
                 continue;
             }
+
+            g_hash_table_insert(parents, (void*)dc_channel_id(c), ci);
 
             ncdc_treeitem_set_label(ci, name);
             free(name);
             name = NULL;
 
             ncdc_treeitem_set_tag(ci, c);
-            ncdc_treeitem_add(i, ci);
+
+            if (dc_channel_parent_id(c) != NULL &&
+                g_hash_table_contains(parents, dc_channel_parent_id(c))) {
+                ncdc_treeitem_t parent = g_hash_table_lookup(
+                    parents, dc_channel_parent_id(c)
+                    );
+                ncdc_treeitem_add(parent, ci);
+            } else {
+                ncdc_treeitem_add(i, ci);
+            }
         }
 
         ncdc_treeitem_add(n->root, i);
     }
+
+    g_hash_table_unref(parents);
 }
 
 void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)

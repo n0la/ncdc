@@ -249,6 +249,12 @@ char const *dc_channel_id(dc_channel_t c)
     return c->id;
 }
 
+char const *dc_channel_parent_id(dc_channel_t c)
+{
+    return_if_true(c == NULL, NULL);
+    return c->parent_id;
+}
+
 dc_channel_type_t dc_channel_type(dc_channel_t c)
 {
     return_if_true(c == NULL, -1);
