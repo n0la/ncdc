@@ -400,7 +400,7 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
     if (key != NULL &&
         (k = ncdc_find_keybinding(keys_global, key, keylen)) != NULL) {
         k->handler(n);
-        return;
+        goto cleanup;
     }
 
     switch (n->focus) {
@@ -433,6 +433,8 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
         }
     } break;
     }
+
+cleanup:
 
     free(key);
 }
