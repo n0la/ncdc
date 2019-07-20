@@ -20,6 +20,14 @@ struct ncdc_treeitem_
     /* user defined data
      */
     void *tag;
+
+    /* highlight current item?
+     */
+    bool highlight;
+
+    /* parent
+     */
+    struct ncdc_treeitem_ *parent;
 };
 
 struct ncdc_treeview_
@@ -86,6 +94,7 @@ void ncdc_treeitem_add(ncdc_treeitem_t i, ncdc_treeitem_t c)
 {
     return_if_true(i == NULL || c == NULL,);
     g_ptr_array_add(i->children, dc_ref(c));
+    c->parent = i;
 }
 
 void ncdc_treeitem_remove(ncdc_treeitem_t i, ncdc_treeitem_t c)
@@ -132,20 +141,43 @@ ncdc_treeitem_render(ncdc_treeitem_t t, WINDOW *win,
 {
     size_t i = 0, off = 0;
     int ret = 0;
+    wchar_t *data = NULL;
+    size_t len = 0;
 
     if (t->content != NULL) {
-        size_t len = wcslen(t->content);
+        if (t->highlight) {
+            wattron(win, COLOR_PAIR(ncdc_colour_treehighlight));
+        }
 
-        mvwaddwstr(win, l, c, t->content);
+        if (t->children->len > 0) {
+            aswprintf(&data, L"[%c] %ls",
+                      (t->collapsed ? '-' : '+'),
+                      t->content
+                );
+        } else {
+            data = wcsdup(t->content);
+        }
+        len = wcslen(data);
+
+        mvwaddwstr(win, l, c, data);
         off = ((len + c) / cols) + 1;
+
+        free(data);
+        data = NULL;
+
+        if (t->highlight) {
+            wattroff(win, COLOR_PAIR(ncdc_colour_treehighlight));
+        }
     }
 
-    for (i = 0; i < t->children->len; i++) {
-        ncdc_treeitem_t child = g_ptr_array_index(t->children, i);
-        ret = ncdc_treeitem_render(child, win, lines, cols,
-                                   l + off, c + 1
-            );
-        off += ret;
+    if (!t->collapsed) {
+        for (i = 0; i < t->children->len; i++) {
+            ncdc_treeitem_t child = g_ptr_array_index(t->children, i);
+            ret = ncdc_treeitem_render(child, win, lines, cols,
+                                       l + off, c + 1
+                );
+            off += ret;
+        }
     }
 
     return off;
@@ -192,4 +224,90 @@ ncdc_treeitem_t ncdc_treeview_root(ncdc_treeview_t t)
 {
     return_if_true(t == NULL, NULL);
     return t->root;
+}
+
+void ncdc_treeview_previous(ncdc_treeview_t t)
+{
+    return_if_true(t == NULL,);
+
+    ncdc_treeitem_t cur = t->current;
+    ncdc_treeitem_t found = NULL, child = NULL;
+    size_t i = 0;
+
+    if (cur->parent != NULL) {
+        for (i = 0; i < cur->parent->children->len; i++) {
+            child = g_ptr_array_index(cur->parent->children, i);
+            if (child == cur && i > 0) {
+                found = g_ptr_array_index(cur->parent->children, i-1);
+                break;
+            }
+        }
+    }
+
+    if (found == NULL) {
+        cur = cur->parent;
+    } else {
+        cur = found;
+    }
+
+    if (cur == NULL) {
+        cur = t->root;
+    }
+
+    t->current->highlight = false;
+    cur->highlight = true;
+    t->current = cur;
+}
+
+void ncdc_treeview_next(ncdc_treeview_t t)
+{
+    return_if_true(t == NULL,);
+
+    ncdc_treeitem_t cur = t->current;
+    ncdc_treeitem_t found = NULL;
+    ncdc_treeitem_t child = NULL;
+    size_t i = 0;
+
+    if (cur->children->len == 0 || cur->collapsed) {
+        while (cur != NULL && cur->parent != NULL && found == NULL) {
+
+            found = NULL;
+            for (i = 0; i < cur->parent->children->len; i++) {
+                child = g_ptr_array_index(cur->parent->children, i);
+                if (child == cur && i < cur->parent->children->len-1) {
+                    found = g_ptr_array_index(cur->parent->children, i+1);
+                    break;
+                }
+            }
+
+            if (found == NULL) {
+                cur = cur->parent;
+            }
+        }
+        cur = found;
+    } else if (cur->children->len > 0 && !cur->collapsed) {
+        cur = g_ptr_array_index(cur->children, 0);
+    }
+
+    if (cur == NULL) {
+        cur = t->root;
+    }
+
+    t->current->highlight = false;
+    cur->highlight = true;
+    t->current = cur;
+}
+
+void ncdc_treeview_collapse(ncdc_treeview_t t)
+{
+    return_if_true(t == NULL || t->current == NULL,);
+    return_if_true(t->current == t->root,);
+    t->current->collapsed = true;
+}
+
+void ncdc_treeview_expand(ncdc_treeview_t t)
+{
+    return_if_true(t == NULL || t->current == NULL,);
+    return_if_true(t->current == t->root,);
+    t->current->collapsed = false;
 }

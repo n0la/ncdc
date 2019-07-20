@@ -15,6 +15,7 @@ typedef struct {
 #define NCDC_BINDING(k, n, f) { .key = k, .name = n, .handler = (ncdc_keyhandler_t) f }
 #define NCDC_BINDEND()        { .key = {0}, .name = NULL, .handler = NULL }
 
+extern ncdc_keybinding_t keys_guilds[];
 extern ncdc_keybinding_t keys_emacs[];
 extern ncdc_keybinding_t keys_mainwin[];
 

@@ -368,7 +368,9 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
         keylen = wcslen(key);
 
         FILE *f = fopen("keys.txt", "a+");
-        fwprintf(f, L"KEY: %ls\n", key);
+        fwprintf(f, L"KEY: %02X %ls\n",
+                 key[0], &key[1]
+            );
         fclose(f);
     }
 
@@ -379,6 +381,12 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
     if (key != NULL &&
         (k = ncdc_find_keybinding(keys_mainwin, key, keylen)) != NULL) {
         k->handler(n);
+        return;
+    }
+
+    if (key != NULL &&
+        (k = ncdc_find_keybinding(keys_guilds, key, keylen)) != NULL) {
+        k->handler(n->guildview);
         return;
     }
 
@@ -422,11 +430,11 @@ void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
     ncdc_input_draw(n->in, n->input);
     wnoutrefresh(n->input);
 
-    wbkgd(n->sep1, COLOR_PAIR(1));
+    wbkgd(n->sep1, COLOR_PAIR(ncdc_colour_separator));
     ncdc_mainwindow_render_status(n);
     wnoutrefresh(n->sep1);
 
-    wbkgd(n->sep2, COLOR_PAIR(1));
+    wbkgd(n->sep2, COLOR_PAIR(ncdc_colour_separator));
     wnoutrefresh(n->sep2);
 
     ncdc_mainwindow_update_focus(n);

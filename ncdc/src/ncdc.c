@@ -179,7 +179,8 @@ int main(int ac, char **av)
         start_color();
         use_default_colors();
 
-        init_pair(1, COLOR_WHITE, COLOR_BLUE);
+        init_pair(ncdc_colour_separator, COLOR_WHITE, COLOR_BLUE);
+        init_pair(ncdc_colour_treehighlight, COLOR_WHITE, COLOR_RED);
     }
 
     mainwin = ncdc_mainwindow_new();

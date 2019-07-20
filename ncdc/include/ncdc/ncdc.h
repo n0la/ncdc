@@ -37,6 +37,11 @@
 #define return_if_true(v,r) do { if (v) return r; } while(0)
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)
 
+typedef enum {
+    ncdc_colour_separator = 1,
+    ncdc_colour_treehighlight = 2,
+} ncdc_colour_pair;
+
 extern GPtrArray *sessions;
 extern dc_session_t current_session;
 

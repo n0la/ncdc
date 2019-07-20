@@ -29,4 +29,11 @@ ncdc_treeview_t ncdc_treeview_new(void);
 ncdc_treeitem_t ncdc_treeview_root(ncdc_treeview_t t);
 void ncdc_treeview_render(ncdc_treeview_t t, WINDOW *w, int lines, int cols);
 
+/* move the cursor around, and collapse/expand items
+ */
+void ncdc_treeview_previous(ncdc_treeview_t t);
+void ncdc_treeview_next(ncdc_treeview_t t);
+void ncdc_treeview_collapse(ncdc_treeview_t t);
+void ncdc_treeview_expand(ncdc_treeview_t t);
+
 #endif

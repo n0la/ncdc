@@ -2,6 +2,7 @@
 
 #include <ncdc/mainwindow.h>
 #include <ncdc/input.h>
+#include <ncdc/treeview.h>
 
 ncdc_keybinding_t *
 ncdc_find_keybinding(ncdc_keybinding_t *keys, wchar_t const *key, size_t l)
@@ -17,6 +18,22 @@ ncdc_find_keybinding(ncdc_keybinding_t *keys, wchar_t const *key, size_t l)
 
     return NULL;
 }
+
+ncdc_keybinding_t keys_guilds[] = {
+    /* CTRL+KEY_UP
+     */
+    NCDC_BINDING(L"\x1B[1;5A",     L"previous-item", ncdc_treeview_previous),
+    /* CTRL+KEY_DOWN
+     */
+    NCDC_BINDING(L"\x1B[1;5B",     L"next-item", ncdc_treeview_next),
+    /* CTRL+KEY_RIGHT
+     */
+    NCDC_BINDING(L"\x1B[1;5C",     L"expand-item", ncdc_treeview_expand),
+    /* CTRL+KEY_LEFT
+     */
+    NCDC_BINDING(L"\x1B[1;5D",     L"collapse-item", ncdc_treeview_collapse),
+    NCDC_BINDEND()
+};
 
 ncdc_keybinding_t keys_mainwin[] = {
     /* ALT+KEY_RIGHT
