@@ -56,7 +56,7 @@ extern void *mainwindow;
 
 bool is_logged_in(void);
 
-wchar_t *util_readkey(int esc, WINDOW *win);
+wchar_t *util_readkey(int esc);
 
 void exit_main(void);
 

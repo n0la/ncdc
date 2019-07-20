@@ -184,14 +184,17 @@ static void ncdc_mainwindow_update_focus(ncdc_mainwindow_t n)
     switch (n->focus) {
     case FOCUS_GUILDS:
     {
+        curs_set(0);
     } break;
 
     case FOCUS_CHAT:
     {
+        curs_set(0);
     } break;
 
     case FOCUS_INPUT:
     {
+        curs_set(1);
         wmove(n->input, 0, ncdc_input_cursor(n->in));
         wrefresh(n->input);
     } break;
@@ -343,26 +346,12 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
     wint_t i = 0;
     wchar_t *key = NULL;
     size_t keylen = 0;
-    WINDOW *win = NULL;
     ncdc_keybinding_t *k = NULL;
 
-    switch (n->focus) {
-    case FOCUS_INPUT: win = n->input; break;
-    case FOCUS_CHAT: win = n->chat; break;
-    case FOCUS_GUILDS: win = n->guilds; break;
-    }
-
-    if (wget_wch(win, &i) == ERR) {
-        return;
-    }
-
-    if (i == KEY_RESIZE) {
-        ncdc_mainwindow_resize(n);
-        return;
-    }
+    i = fgetwc(stdin);
 
     if (i == KEY_ESCAPE) {
-        if ((key = util_readkey(i, n->input)) == NULL) {
+        if ((key = util_readkey(i)) == NULL) {
             return;
         }
         keylen = wcslen(key);
@@ -379,23 +368,38 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
     fclose(f);
 
     if (key != NULL &&
-        (k = ncdc_find_keybinding(keys_mainwin, key, keylen)) != NULL) {
+        (k = ncdc_find_keybinding(keys_global, key, keylen)) != NULL) {
         k->handler(n);
         return;
     }
 
-    if (key != NULL &&
-        (k = ncdc_find_keybinding(keys_guilds, key, keylen)) != NULL) {
-        k->handler(n->guildview);
-        return;
-    }
-
-    if (n->focus == FOCUS_INPUT) {
-        if (key == NULL) {
-            ncdc_input_feed(n->in, (wchar_t const *)&i, 1);
-        } else {
-            ncdc_input_feed(n->in, key, wcslen(key));
+    switch (n->focus) {
+    case FOCUS_CHAT:
+    {
+        if (key != NULL &&
+            (k = ncdc_find_keybinding(keys_chat, key, keylen)) != NULL) {
+            k->handler(n->guildview);
         }
+    } break;
+
+    case FOCUS_GUILDS:
+    {
+        if (key != NULL &&
+            (k = ncdc_find_keybinding(keys_guilds, key, keylen)) != NULL) {
+            k->handler(n->guildview);
+        }
+    } break;
+
+    case FOCUS_INPUT:
+    {
+        if (n->focus == FOCUS_INPUT) {
+            if (key == NULL) {
+                ncdc_input_feed(n->in, (wchar_t const *)&i, 1);
+            } else {
+                ncdc_input_feed(n->in, key, wcslen(key));
+            }
+        }
+    } break;
     }
 
     free(key);
@@ -467,6 +471,27 @@ static void ncdc_mainwindow_ack_view(ncdc_mainwindow_t n)
                        c, m
         );
 #endif
+}
+
+void ncdc_mainwindow_switch_guilds(ncdc_mainwindow_t n)
+{
+    return_if_true(n == NULL,);
+    n->focus = FOCUS_GUILDS;
+    ncdc_mainwindow_update_focus(n);
+}
+
+void ncdc_mainwindow_switch_input(ncdc_mainwindow_t n)
+{
+    return_if_true(n == NULL,);
+    n->focus = FOCUS_INPUT;
+    ncdc_mainwindow_update_focus(n);
+}
+
+void ncdc_mainwindow_switch_chat(ncdc_mainwindow_t n)
+{
+    return_if_true(n == NULL,);
+    n->focus = FOCUS_CHAT;
+    ncdc_mainwindow_update_focus(n);
 }
 
 void ncdc_mainwindow_rightview(ncdc_mainwindow_t n)

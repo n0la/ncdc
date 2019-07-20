@@ -17,7 +17,8 @@ typedef struct {
 
 extern ncdc_keybinding_t keys_guilds[];
 extern ncdc_keybinding_t keys_emacs[];
-extern ncdc_keybinding_t keys_mainwin[];
+extern ncdc_keybinding_t keys_chat[];
+extern ncdc_keybinding_t keys_global[];
 
 ncdc_keybinding_t *ncdc_find_keybinding(ncdc_keybinding_t *keys,
                                         wchar_t const *key, size_t l);

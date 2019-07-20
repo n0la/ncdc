@@ -6,18 +6,29 @@ bool is_logged_in(void)
     return dc_session_has_token(current_session);
 }
 
-wchar_t *util_readkey(int e, WINDOW *win)
+wchar_t *util_readkey(int e)
 {
     wint_t esc[7] = {0};
     int i = 0;
+    int len = 0;
 
     return_if_true(e != KEY_ESCAPE, NULL);
 
     esc[0] = e;
-    for (i = 1; i < 6; i++) {
-        if (wget_wch(win, esc+i) == ERR) {
-            return NULL;
-        }
+    esc[1] = fgetwc(stdin);
+
+    switch (esc[1]) {
+    /* here it depends on the next character we read
+     */
+    case L'[': len = 3; break;
+    /* O codes move the cursor, and have one additional bit set
+     */
+    case L'O': len = 1; break;
+    default: len = 5;
+    }
+
+    for (i = 0; i < len; i++) {
+        esc[i+2] = fgetwc(stdin);
     }
 
     return wcsdup((wchar_t const *)esc);
