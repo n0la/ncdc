@@ -382,16 +382,20 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
         }
         keylen = wcslen(key);
 
+#if 0
         FILE *f = fopen("keys.txt", "a+");
         fwprintf(f, L"KEY: %02X %ls\n",
                  key[0], &key[1]
             );
         fclose(f);
+#endif
     }
 
+#if 0
     FILE *f = fopen("keys.txt", "a+");
     fwprintf(f, L"%X\n", i);
     fclose(f);
+#endif
 
     if (key != NULL &&
         (k = ncdc_find_keybinding(keys_global, key, keylen)) != NULL) {

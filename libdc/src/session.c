@@ -182,12 +182,14 @@ static void dc_session_handler(dc_gateway_t gw, dc_event_t e, void *p)
         h(s, e);
     }
 
+#ifdef DEBUG
     char *str = NULL;
     str = json_dumps(dc_event_payload(e), 0);
     FILE *f = fopen("events.txt", "a+");
     fprintf(f, "%s: %s\n", dc_event_type(e), str);
     free(str);
     fclose(f);
+#endif
 }
 
 dc_session_t dc_session_new(dc_loop_t loop)

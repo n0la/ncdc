@@ -25,7 +25,11 @@
 #include <dc/refable.h>
 #include <dc/account.h>
 
-#define DEBUG
+/* For internal debugging only. Please note that the client will then begin to
+ * write text files everywhere filled with all sorts of private information. Use
+ * with caution.
+ */
+/*#define DEBUG*/
 
 #define return_if_true(v,r) do { if (v) return r; } while(0)
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)
