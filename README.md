@@ -146,4 +146,17 @@ byte strings (i.e. UTF-8). Put all UI stuff into `ncdc` (ncurses discord
 client), and use `wchar_t` there for displaying purposes, along with the
 wide character functions of ncurses.
 
+You can valgrind the application like so:
+
+```shell
+valgrind --log-file=valgrind.log --leak-check=full --undef-value-errors=no ./ncdc/ncdc
+```
+
+And you should debug the ncurses application by attaching to it from another
+terminal:
+
+```shell
+$ gdb --pid=$(pidof ncdc)
+```
+
 Happy Hacking!
