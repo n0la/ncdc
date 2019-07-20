@@ -20,7 +20,7 @@ wchar_t *util_readkey(int e)
     switch (esc[1]) {
     /* here it depends on the next character we read
      */
-    case L'[': len = 3; break;
+    case L'[': len = 4; break;
     /* O codes move the cursor, and have one additional bit set
      */
     case L'O': len = 1; break;
