@@ -40,19 +40,16 @@ ncdc_keybinding_t keys_guilds[] = {
 };
 
 ncdc_keybinding_t keys_chat[] = {
-    /* ALT+KEY_RIGHT
-     */
-    NCDC_BINDING(L"\x1B[1;3C",  L"right-window", ncdc_mainwindow_rightview),
-    NCDC_BINDING(L"\x1B0C",     L"right-window", ncdc_mainwindow_rightview),
-    /* ALT+KEY_LEFT
-     */
-    NCDC_BINDING(L"\x1B[1;3D",  L"left-window",  ncdc_mainwindow_leftview),
-    NCDC_BINDING(L"\x1B0D",     L"left-window", ncdc_mainwindow_leftview),
-
     NCDC_BINDEND()
 };
 
 ncdc_keybinding_t keys_global[] = {
+    /* ALT+KEY_RIGHT
+     */
+    NCDC_BINDING(L"\x1B[1;3C",  L"right-window", ncdc_mainwindow_rightview),
+    /* ALT+KEY_LEFT
+     */
+    NCDC_BINDING(L"\x1B[1;3D",  L"left-window",  ncdc_mainwindow_leftview),
     /* F1
      */
     NCDC_BINDING(L"\x1BOP",     L"select-input", ncdc_mainwindow_switch_input),
