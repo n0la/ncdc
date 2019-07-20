@@ -296,14 +296,10 @@ void ncdc_mainwindow_update_guilds(ncdc_mainwindow_t n)
         ncdc_treeitem_t i = ncdc_treeitem_new();
         wchar_t *name = NULL;
 
-        if (i == NULL) {
-            continue;
-        }
+        goto_if_true(i == NULL, cleanup);
 
         name = s_convert(dc_guild_name(g));
-        if (name == NULL) {
-            continue;
-        }
+        goto_if_true(i ==  NULL, cleanup);
 
         ncdc_treeitem_set_label(i, name);
 
@@ -318,15 +314,12 @@ void ncdc_mainwindow_update_guilds(ncdc_mainwindow_t n)
             dc_channel_t c = dc_guild_nth_channel(g, idx);
             ncdc_treeitem_t ci = NULL;
 
-            if (dc_channel_name(c) == NULL ||
-                dc_channel_id(c) == NULL) {
-                continue;
-            }
+            goto_if_true(dc_channel_name(c) == NULL ||
+                         dc_channel_id(c) == NULL, cleanup
+                );
 
             ci = ncdc_treeitem_new();
-            if (ci == NULL) {
-                continue;
-            }
+            goto_if_true(ci == NULL, cleanup);
 
             if (dc_channel_type(c) == CHANNEL_TYPE_GUILD_VOICE ||
                 dc_channel_type(c) == CHANNEL_TYPE_GUILD_TEXT) {
@@ -338,7 +331,9 @@ void ncdc_mainwindow_update_guilds(ncdc_mainwindow_t n)
             } else {
                 aswprintf(&name, L"%s", dc_channel_name(c));
             }
+
             if (name == NULL) {
+                dc_unref(ci);
                 continue;
             }
 
@@ -359,9 +354,20 @@ void ncdc_mainwindow_update_guilds(ncdc_mainwindow_t n)
             } else {
                 ncdc_treeitem_add(i, ci);
             }
+
+            dc_unref(ci);
+            ci = NULL;
         }
 
         ncdc_treeitem_add(n->root, i);
+
+    cleanup:
+
+        dc_unref(i);
+        i = NULL;
+
+        free(name);
+        name = NULL;
     }
 
     g_hash_table_unref(parents);
