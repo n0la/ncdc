@@ -21,7 +21,7 @@ wchar_t *util_readkey(int e)
     /* here it depends on the next character we read
      */
     case L'[': len = 4; break;
-    /* O codes move the cursor, and have one additional bit set
+    /* O codes move the cursor, and have one additional byte after
      */
     case L'O': len = 1; break;
     default: len = 5;
