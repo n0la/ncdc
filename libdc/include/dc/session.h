@@ -69,12 +69,15 @@ dc_api_t dc_session_api(dc_session_t s);
  * access to the internal account cache
  */
 void dc_session_add_account(dc_session_t s, dc_account_t u);
+void dc_session_add_account_new(dc_session_t s, dc_account_t u);
 dc_account_t dc_session_account_fullname(dc_session_t s, char const *f);
 
 /**
- * Adds a new channel to the internal cache.
+ * Adds a new channel to the internal cache. _new does the same, but doesn't
+ * increase the reference count.
  */
 void dc_session_add_channel(dc_session_t s, dc_channel_t u);
+void dc_session_add_channel_new(dc_session_t s, dc_channel_t u);
 
 dc_channel_t dc_session_channel_by_id(dc_session_t s, char const *snowflake);
 
@@ -96,9 +99,11 @@ dc_channel_t dc_session_channel_recipients(dc_session_t s,
                                            dc_account_t *r, size_t sz);
 
 /**
- * Add a guild to be managed by this session.
+ * Add a guild to be managed by this session. _new does the same, but doesn't
+ * ref the given reference.
  */
 void dc_session_add_guild(dc_session_t s, dc_guild_t g);
+void dc_session_add_guild_new(dc_session_t s, dc_guild_t g);
 GHashTable *dc_session_guilds(dc_session_t s);
 dc_guild_t dc_session_guild_by_name(dc_session_t s, char const *name);
 

@@ -109,7 +109,7 @@ ncdc_mainwindow_t ncdc_mainwindow_new(void)
     ptr->focus = FOCUS_INPUT;
     ncdc_mainwindow_update_focus(ptr);
 
-    return ptr;
+    return dc_ref(ptr);
 }
 
 static bool

@@ -83,7 +83,7 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
     json_t *user = NULL;
     json_t *relationships = NULL;
     json_t *presences = NULL;
-    size_t idx = 0, i = 0;
+    size_t idx = 0;
     json_t *c = NULL;
     json_t *channels = NULL;
     json_t *guilds = NULL;
@@ -109,7 +109,7 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
             }
 
             dc_account_add_friend(s->login, u);
-            dc_session_add_account(s, u);
+            dc_session_add_account_new(s, u);
         }
     }
 
@@ -142,14 +142,7 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
         json_array_foreach(guilds, idx, c) {
             dc_guild_t guild = dc_guild_from_json(c);
             continue_if_true(guild == NULL);
-            dc_session_add_guild(s, guild);
-
-            /* add their channels to our own thing
-             */
-            for (i = 0; i < dc_guild_channels(guild); i++) {
-                dc_channel_t chan = dc_guild_nth_channel(guild, i);
-                dc_session_add_channel(s, chan);
-            }
+            dc_session_add_guild_new(s, guild);
         }
     }
 
@@ -159,14 +152,10 @@ static void dc_session_handle_ready(dc_session_t s, dc_event_t e)
     if (channels != NULL && json_is_array(channels)) {
         json_array_foreach(channels, idx, c) {
             dc_channel_t chan = dc_channel_from_json(c);
-            if (chan == NULL) {
-                continue;
-            }
-
+            continue_if_true(chan == NULL);
             /* TODO: dedup recipients
              */
-
-            dc_session_add_channel(s, chan);
+            dc_session_add_channel_new(s, chan);
         }
     }
 
@@ -249,6 +238,18 @@ bool dc_session_logout(dc_session_t s)
         s->gateway = NULL;
     }
 
+    if (s->accounts != NULL) {
+        g_hash_table_remove_all(s->accounts);
+    }
+
+    if (s->guilds != NULL) {
+        g_hash_table_remove_all(s->guilds);
+    }
+
+    if (s->channels != NULL) {
+        g_hash_table_remove_all(s->channels);
+    }
+
     s->ready = false;
 
     return true;
@@ -327,12 +328,18 @@ bool dc_session_equal_me_fullname(dc_session_t s, char const *a)
 void dc_session_add_account(dc_session_t s, dc_account_t u)
 {
     return_if_true(s == NULL || u == NULL,);
+    dc_session_add_account_new(s, dc_ref(u));
+}
+
+void dc_session_add_account_new(dc_session_t s, dc_account_t u)
+{
+    return_if_true(s == NULL || u == NULL,);
     return_if_true(dc_account_id(u) == NULL,);
 
     char const *id = dc_account_id(u);
 
     if (!g_hash_table_contains(s->accounts, id)) {
-        g_hash_table_insert(s->accounts, strdup(id), dc_ref(u));
+        g_hash_table_insert(s->accounts, strdup(id), u);
     }
 }
 
@@ -364,12 +371,18 @@ dc_channel_t dc_session_channel_by_id(dc_session_t s, char const *snowflake)
 void dc_session_add_channel(dc_session_t s, dc_channel_t u)
 {
     return_if_true(s == NULL || u == NULL,);
+    dc_session_add_channel_new(s, dc_ref(u));
+}
+
+void dc_session_add_channel_new(dc_session_t s, dc_channel_t u)
+{
+    return_if_true(s == NULL || u == NULL,);
     return_if_true(dc_channel_id(u) == NULL,);
 
     char const *id = dc_channel_id(u);
 
     if (!g_hash_table_contains(s->channels, id)) {
-        g_hash_table_insert(s->channels, strdup(id), dc_ref(u));
+        g_hash_table_insert(s->channels, strdup(id), u);
         /* TODO: dedup for saving storage
          */
     }
@@ -392,12 +405,7 @@ dc_channel_t dc_session_make_channel(dc_session_t s, dc_account_t *r,
         }
 
         return_if_true(c == NULL, NULL);
-        dc_session_add_channel(s, c);
-        /* unref once to match the proper ref count after
-         * dc_session_add_channel()
-         * BUG: if dc_session_add_channel() fails this is bad
-         */
-        dc_unref(c);
+        dc_session_add_channel_new(s, c);
     }
 
     if (dc_channel_messages(c) <= 0 && dc_channel_is_dm(c)) {
@@ -455,14 +463,28 @@ GHashTable *dc_session_guilds(dc_session_t s)
 void dc_session_add_guild(dc_session_t s, dc_guild_t g)
 {
     return_if_true(s == NULL || g == NULL,);
+    dc_session_add_guild_new(s, dc_ref(g));
+}
+
+void dc_session_add_guild_new(dc_session_t s, dc_guild_t g)
+{
+    return_if_true(s == NULL || g == NULL,);
     return_if_true(dc_guild_id(g) == NULL,);
 
     char const *id = dc_guild_id(g);
+    size_t i = 0;
 
     if (!g_hash_table_contains(s->guilds, id)) {
-        g_hash_table_insert(s->guilds, strdup(id), dc_ref(g));
+        g_hash_table_insert(s->guilds, strdup(id), g);
         /* TODO: dedup for saving storage
          */
+    }
+
+    /* add their channels to our own thing
+     */
+    for (i = 0; i < dc_guild_channels(g); i++) {
+        dc_channel_t chan = dc_guild_nth_channel(g, i);
+        dc_session_add_channel(s, chan);
     }
 }
 

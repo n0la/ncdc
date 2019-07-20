@@ -50,9 +50,8 @@ bool ncdc_cmd_login(ncdc_mainwindow_t n, size_t ac,
     dc_unref(current_session);
     current_session = dc_ref(s);
 
-    LOG(n, L"login: %ls: authentication successful, waiting for ready from websocket...",
-        av[1]
-        );
+    LOG(n, L"login: %ls: authentication successful, waiting for ready "
+        L"from websocket...", av[1]);
 
     while (!dc_session_is_ready(current_session))
         ;
