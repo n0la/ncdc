@@ -50,18 +50,25 @@ static void ncdc_textview_maketitle(ncdc_textview_t v)
     size_t i = 0;
     wchar_t *buf = NULL;
     size_t buflen = 0;
-    FILE *f = open_wmemstream(&buf, &buflen);
     size_t rlen = dc_channel_recipients(v->channel);
+    int type = dc_channel_type(v->channel);
 
-    for (i = 0; i < rlen; i++) {
-        dc_account_t r = dc_channel_nth_recipient(v->channel, i);
-        fwprintf(f, L"%s", dc_account_fullname(r));
-        if (i < (rlen-1)) {
-            fwprintf(f, L",");
+    if (type == CHANNEL_TYPE_GUILD_TEXT) {
+        aswprintf(&buf, L"#%s", dc_channel_name(v->channel));
+    } else if (type == CHANNEL_TYPE_GUILD_VOICE) {
+        aswprintf(&buf, L">%s", dc_channel_name(v->channel));
+    } else if (dc_channel_is_dm(v->channel)) {
+        FILE *f = open_wmemstream(&buf, &buflen);
+        for (i = 0; i < rlen; i++) {
+            dc_account_t r = dc_channel_nth_recipient(v->channel, i);
+            fwprintf(f, L"%s", dc_account_fullname(r));
+            if (i < (rlen-1)) {
+                fwprintf(f, L"/");
+            }
         }
-    }
 
-    fclose(f);
+        fclose(f);
+    }
 
     free(v->title);
     v->title = buf;

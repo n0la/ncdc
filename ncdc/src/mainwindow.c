@@ -512,7 +512,6 @@ ncdc_textview_t
 ncdc_mainwindow_switch_or_add(ncdc_mainwindow_t n, dc_channel_t c)
 {
     ncdc_textview_t v = NULL;
-    wchar_t *name = NULL;
 
     return_if_true(n == NULL || c == NULL, NULL);
     return_if_true(!is_logged_in(), NULL);
@@ -526,32 +525,6 @@ ncdc_mainwindow_switch_or_add(ncdc_mainwindow_t n, dc_channel_t c)
 
         ncdc_textview_set_account(v, dc_session_me(current_session));
         ncdc_textview_set_channel(v, c);
-
-        if (dc_channel_type(c) == CHANNEL_TYPE_GUILD_TEXT) {
-            aswprintf(&name, L"#%s", dc_channel_name(c));
-        } else if (dc_channel_type(c) == CHANNEL_TYPE_GUILD_VOICE) {
-            aswprintf(&name, L">%s", dc_channel_name(c));
-        } else if (dc_channel_is_dm(c)) {
-            size_t namelen = 0, i = 0;
-            FILE *f = open_wmemstream(&name, &namelen);
-
-            for (i = 0; i < dc_channel_recipients(c); i++) {
-                dc_account_t rec = dc_channel_nth_recipient(c, i);
-                if (dc_account_fullname(rec) != NULL) {
-                    fwprintf(f, L"%s", dc_account_fullname(rec));
-                    if (i < dc_channel_recipients(c)-1) {
-                        fputwc('/', f);
-                    }
-                }
-            }
-
-            fclose(f);
-        }
-
-        if (name != NULL) {
-            ncdc_textview_set_title(v, name);
-            free(name);
-        }
 
         g_ptr_array_add(n->views, v);
         ncdc_mainwindow_switch_view(n, v);
