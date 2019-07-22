@@ -450,14 +450,6 @@ GPtrArray *ncdc_mainwindow_views(ncdc_mainwindow_t n)
     return n->views;
 }
 
-void ncdc_mainwindow_switchview(ncdc_mainwindow_t n, int idx)
-{
-    return_if_true(n == NULL || n->views == NULL,);
-    return_if_true(idx >= n->views->len,);
-
-    n->curview = idx;
-}
-
 void ncdc_mainwindow_switch_view(ncdc_mainwindow_t n, ncdc_textview_t v)
 {
     return_if_true(n == NULL || n->views == NULL || v == NULL,);
@@ -506,6 +498,24 @@ void ncdc_mainwindow_log(ncdc_mainwindow_t w, wchar_t const *fmt, ...)
     va_end(lst);
 
     ncdc_textview_append(w->log, buf);
+}
+
+void ncdc_mainwindow_close_view(ncdc_mainwindow_t n, int idx)
+{
+    if (idx < 0) {
+        idx = n->curview;
+    }
+
+    return_if_true(idx < 0,);
+
+    /* don't close status view
+     */
+    if (idx == 0) {
+        return;
+    }
+
+    n->curview = idx - 1;
+    g_ptr_array_remove_index(n->views, idx);
 }
 
 ncdc_textview_t

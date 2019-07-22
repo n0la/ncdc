@@ -2,6 +2,7 @@
 
 ncdc_commands_t cmds[] = {
     { L"/ack",      ncdc_cmd_ack },
+    { L"/close",    ncdc_cmd_close },
     { L"/connect",  ncdc_cmd_login },
     { L"/friend",   ncdc_cmd_friends },
     { L"/friends",  ncdc_cmd_friends },
@@ -12,6 +13,7 @@ ncdc_commands_t cmds[] = {
     { L"/msg",      ncdc_cmd_msg },
     { L"/post",     ncdc_cmd_post },
     { L"/quit",     ncdc_cmd_quit },
+    { L"/wc",       ncdc_cmd_close },
     { NULL, NULL }
 };
 

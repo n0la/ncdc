@@ -17,6 +17,7 @@ SET(SOURCES
   "src/ack.c"
   "src/cmds.c"
   "src/config.c"
+  "src/close.c"
   "src/friends.c"
   "src/input.c"
   "src/join.c"

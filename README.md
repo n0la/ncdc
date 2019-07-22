@@ -101,6 +101,7 @@ guild names, or user names are all case sensitive.
 | Command        | Function                          | Arguments                         | Notes |
 |----------------|-----------------------------------|-----------------------------------|-------|
 | /ack           | Mark channel as read              |                                   | WIP   |
+| /close         | Close current channel view        |                                   |       |
 | /connect       | Connect as the given account      | account, as named in config       |       |
 | /friend        | List all friends                  |                                   |       |
 | /friend accept | Accept a friend request           | full discord name, i.e. name#XXXX |       |
@@ -115,6 +116,7 @@ guild names, or user names are all case sensitive.
 | /msg           | Private message a friend          | full discord name, i.e. name#XXXX |       |
 | /post          | Post a message to current channel | full message to post              |       |
 | /quit          | Exit, and quit                    |                                   |       |
+| /wc            | Alias for /close                  |                                   |       |
 
 ## Work In Progress
 
@@ -123,7 +125,6 @@ are a few that would be nice to have:
 
 * auto completion
 * man pages
-* closing of chat windows
 * notification handling if guilds are edited
 * notification handling if friends send you a message
 * /markread support
