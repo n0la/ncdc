@@ -477,9 +477,37 @@ void ncdc_mainwindow_switch_view(ncdc_mainwindow_t n, ncdc_textview_t v)
     }
 }
 
+static void ncdc_mainwindow_handle_events(ncdc_mainwindow_t n)
+{
+    if (!is_logged_in()) {
+        return;
+    }
+
+    dc_event_t e = NULL;
+
+    e = dc_session_pop_event(current_session);
+    if (e == NULL) {
+        return;
+    }
+
+    switch (dc_event_type_code(e)) {
+    case DC_EVENT_TYPE_READY:
+    {
+        LOG(n, L"connection to discord is ready");
+        ncdc_mainwindow_update_guilds(n);
+    } break;
+
+    default: break;
+    }
+
+    dc_unref(e);
+}
+
 void ncdc_mainwindow_refresh(ncdc_mainwindow_t n)
 {
     ncdc_textview_t v = 0;
+
+    ncdc_mainwindow_handle_events(n);
 
     ncdc_treeview_render(n->guildview, n->guilds, n->guilds_h, n->guilds_w);
     wnoutrefresh(n->guilds);

@@ -32,6 +32,9 @@ struct dc_session_
     GHashTable *accounts;
     GHashTable *channels;
     GHashTable *guilds;
+
+    GQueue *queue;
+    pthread_mutex_t *mutex;
 };
 
 /* event handlers
@@ -49,6 +52,16 @@ static dc_session_handler_t handlers[DC_EVENT_TYPE_LAST] = {
 static void dc_session_free(dc_session_t s)
 {
     return_if_true(s == NULL,);
+
+    if (s->mutex != NULL) {
+        pthread_mutex_lock(s->mutex);
+        if (s->queue != NULL) {
+            g_queue_free_full(s->queue, (GDestroyNotify)dc_unref);
+            s->queue = NULL;
+        }
+        pthread_mutex_destroy(s->mutex);
+        s->mutex = NULL;
+    }
 
     if (s->accounts != NULL) {
         g_hash_table_unref(s->accounts);
@@ -189,6 +202,14 @@ static void dc_session_handler(dc_gateway_t gw, dc_event_t e, void *p)
         h(s, e);
     }
 
+    /* add to queue, if the queue is enabled
+     */
+    pthread_mutex_lock(s->mutex);
+    if (s->queue != NULL) {
+        g_queue_push_tail(s->queue, dc_ref(e));
+    }
+    pthread_mutex_unlock(s->mutex);
+
 #ifdef DEBUG
     char *str = NULL;
     str = json_dumps(dc_event_payload(e), 0);
@@ -222,6 +243,9 @@ dc_session_t dc_session_new(dc_loop_t loop)
                                       free, dc_unref
         );
     goto_if_true(s->channels == NULL, error);
+
+    s->mutex = calloc(1, sizeof(pthread_mutex_t));
+    goto_if_true(s->mutex == NULL, error);
 
     s->loop = dc_ref(loop);
 
@@ -335,6 +359,38 @@ bool dc_session_equal_me(dc_session_t s, dc_account_t a)
     return (strcmp(dc_account_fullname(s->login),
                    dc_account_fullname(a)) == 0
         );
+}
+
+void dc_session_enable_queue(dc_session_t s, bool enable)
+{
+    return_if_true(s == NULL,);
+
+    return_if_true(enable == true && s->queue != NULL,);
+    return_if_true(enable == false && s->queue == NULL,);
+
+    if (enable) {
+        pthread_mutex_lock(s->mutex);
+        s->queue = g_queue_new();
+        pthread_mutex_unlock(s->mutex);
+    } else {
+        pthread_mutex_lock(s->mutex);
+        g_queue_free_full(s->queue, (GDestroyNotify)dc_unref);
+        s->queue = NULL;
+        pthread_mutex_unlock(s->mutex);
+    }
+}
+
+dc_event_t dc_session_pop_event(dc_session_t s)
+{
+    return_if_true(s == NULL || s->queue == NULL, NULL);
+
+    dc_event_t e = NULL;
+
+    pthread_mutex_lock(s->mutex);
+    e = g_queue_pop_head(s->queue);
+    pthread_mutex_unlock(s->mutex);
+
+    return e;
 }
 
 bool dc_session_equal_me_fullname(dc_session_t s, char const *a)

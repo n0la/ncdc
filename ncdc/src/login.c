@@ -51,6 +51,10 @@ bool ncdc_cmd_login(ncdc_mainwindow_t n, size_t ac,
             goto cleanup;
         }
 
+        /* enable queueing
+         */
+        dc_session_enable_queue(s, true);
+
         g_ptr_array_add(sessions, s);
     } else {
         s = g_ptr_array_index(sessions, idx);
@@ -68,14 +72,7 @@ bool ncdc_cmd_login(ncdc_mainwindow_t n, size_t ac,
     dc_unref(current_session);
     current_session = dc_ref(s);
 
-    LOG(n, L"login: %ls: authentication successful, waiting for ready "
-        L"from websocket...", av[1]);
-
-    while (!dc_session_is_ready(current_session))
-        ;
-
-    LOG(n, L"login: %ls: ready", av[1]);
-    ncdc_mainwindow_update_guilds(n);
+    LOG(n, L"login: %ls: authentication successful", av[1]);
 
     ret = true;
 

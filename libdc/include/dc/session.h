@@ -84,6 +84,23 @@ dc_account_t dc_session_me(dc_session_t s);
 dc_api_t dc_session_api(dc_session_t s);
 
 /**
+ * Queue API. If you enable queuing the session will keep the events from the
+ * web socket around for you to handle. Please note that all internal states
+ * will already have been upgraded, and changed once you pull these events
+ * from the queue. Also note that if you enable queuing but never pull these
+ * events from the queue they will pile up, and use a lot of memory.
+ *
+ * If you disable queuing then the queue is deleted, and no more events are
+ * placed into the queue.
+ *
+ * dc_session_pop_event() will remove an event from the queue for you to handle.
+ * You will have to call dc_unref() on it yourself to cleanup any internal data
+ * of the event. It will return NULL if no event is in the queue.
+ */
+void dc_session_enable_queue(dc_session_t s, bool enable);
+dc_event_t dc_session_pop_event(dc_session_t s);
+
+/**
  * access to the internal account cache
  */
 void dc_session_add_account(dc_session_t s, dc_account_t u);
