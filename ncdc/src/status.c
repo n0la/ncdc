@@ -24,6 +24,8 @@ bool ncdc_cmd_idle(ncdc_mainwindow_t n, size_t ac, wchar_t **av,
 {
     bool ret = false;
 
+    return_if_true(!is_logged_in(), false);
+
     ret = dc_api_set_user_status(dc_session_api(current_session),
                                  dc_session_me(current_session),
                                  DC_API_USER_STATUS_IDLE
@@ -35,6 +37,8 @@ bool ncdc_cmd_online(ncdc_mainwindow_t n, size_t ac, wchar_t **av,
                      wchar_t const *f)
 {
     bool ret = false;
+
+    return_if_true(!is_logged_in(), false);
 
     ret = dc_api_set_user_status(dc_session_api(current_session),
                                  dc_session_me(current_session),
@@ -48,6 +52,8 @@ bool ncdc_cmd_invisible(ncdc_mainwindow_t n, size_t ac, wchar_t **av,
 {
     bool ret = false;
 
+    return_if_true(!is_logged_in(), false);
+
     ret = dc_api_set_user_status(dc_session_api(current_session),
                                  dc_session_me(current_session),
                                  DC_API_USER_STATUS_INVISIBLE
@@ -59,6 +65,8 @@ bool ncdc_cmd_dnd(ncdc_mainwindow_t n, size_t ac, wchar_t **av,
                   wchar_t const *f)
 {
     bool ret = false;
+
+    return_if_true(!is_logged_in(), false);
 
     ret = dc_api_set_user_status(dc_session_api(current_session),
                                  dc_session_me(current_session),
