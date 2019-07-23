@@ -86,6 +86,19 @@ static void cleanup(void)
     dc_unref(mainwin);
 }
 
+static void handle_winch(int sig)
+{
+    /* according to ncurses documentation you should call
+     * endwin(), followed by a refresh() to properly update
+     * curses
+     */
+    endwin();
+    refresh();
+    clear();
+
+    ncdc_mainwindow_resize(mainwin);
+}
+
 static void sighandler(int sig)
 {
     exit_main();
@@ -167,6 +180,7 @@ int main(int ac, char **av)
     int ret = 0;
 
     signal(SIGINT, sighandler);
+    signal(SIGWINCH, handle_winch);
 
     if (getenv("HOME") == NULL) {
         fprintf(stderr, "your environment doesn't contain HOME; pls fix\n");

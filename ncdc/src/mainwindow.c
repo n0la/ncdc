@@ -66,7 +66,6 @@ struct ncdc_mainwindow_
     int focus;
 };
 
-static void ncdc_mainwindow_resize(ncdc_mainwindow_t n);
 static void ncdc_mainwindow_update_focus(ncdc_mainwindow_t n);
 static bool ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
                                      size_t len, void *arg);
@@ -154,7 +153,7 @@ ncdc_mainwindow_callback(ncdc_input_t i, wchar_t const *s,
     return ret;
 }
 
-static void ncdc_mainwindow_resize(ncdc_mainwindow_t n)
+void ncdc_mainwindow_resize(ncdc_mainwindow_t n)
 {
     n->guilds_h = LINES - 2;
     n->guilds_w = (COLS / 4);

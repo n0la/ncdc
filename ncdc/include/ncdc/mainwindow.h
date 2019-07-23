@@ -27,6 +27,7 @@ struct ncdc_mainwindow_;
 typedef struct ncdc_mainwindow_ *ncdc_mainwindow_t;
 
 ncdc_mainwindow_t ncdc_mainwindow_new(void);
+void ncdc_mainwindow_resize(ncdc_mainwindow_t n);
 
 /* holy shit stains I am lazy
  */
