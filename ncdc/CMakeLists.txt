@@ -28,6 +28,7 @@ SET(SOURCES
   "src/msg.c"
   "src/ncdc.c"
   "src/post.c"
+  "src/status.c"
   "src/textview.c"
   "src/treeview.c"
   "src/util.c"

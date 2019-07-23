@@ -406,7 +406,7 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
         }
         keylen = wcslen(key);
 
-#if 0
+#ifdef NCDC_DEBUG
         FILE *f = fopen("keys.txt", "a+");
         fwprintf(f, L"KEY: %02X %ls\n",
                  key[0], &key[1]
@@ -415,7 +415,7 @@ void ncdc_mainwindow_input_ready(ncdc_mainwindow_t n)
 #endif
     }
 
-#if 0
+#ifdef NCDC_DEBUG
     FILE *f = fopen("keys.txt", "a+");
     fwprintf(f, L"%X\n", i);
     fclose(f);

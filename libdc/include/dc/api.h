@@ -31,6 +31,11 @@
 #include <event.h>
 #include <glib.h>
 
+#define DC_API_USER_STATUS_ONLINE    "online"
+#define DC_API_USER_STATUS_IDLE      "idle"
+#define DC_API_USER_STATUS_DND       "dnd"
+#define DC_API_USER_STATUS_INVISIBLE "invisible"
+
 struct dc_api_;
 typedef struct dc_api_ *dc_api_t;
 
@@ -92,6 +97,14 @@ bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
  */
 bool dc_api_get_userguilds(dc_api_t api, dc_account_t login,
                            GPtrArray **guilds);
+
+/**
+ * Set the online status of the currently logged in user "login". "status" must
+ * be one of the valid string macros defined in this header, or the function
+ * fails.
+ */
+bool dc_api_set_user_status(dc_api_t api, dc_account_t login,
+                            char const *status);
 
 /**
  * Create a 1:1 or 1:N DM channel with the given recipients. The recipients must

@@ -185,7 +185,8 @@ dc_api_do(dc_api_t api, char const *verb,
     }
 
     if (strcmp(verb, "PUT") == 0 ||
-        strcmp(verb, "DELETE") == 0) {
+        strcmp(verb, "DELETE") == 0 ||
+        strcmp(verb, "PATCH") == 0) {
         curl_easy_setopt(c, CURLOPT_CUSTOMREQUEST, verb);
     }
 

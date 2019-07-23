@@ -55,6 +55,9 @@
 #define return_if_true(v,r) do { if (v) return r; } while(0)
 #define goto_if_true(v,l) do { if (v) goto l; } while(0)
 
+/* NCDC_DEBUG variable */
+/*#define NCDC_DEBUG*/
+
 typedef enum {
     ncdc_colour_separator = 1,
     ncdc_colour_treehighlight = 2,

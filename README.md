@@ -103,17 +103,21 @@ guild names, or user names are all case sensitive.
 | /ack           | Mark channel as read              |                                   | WIP   |
 | /close         | Close current channel view        |                                   |       |
 | /connect       | Connect as the given account      | account, as named in config       |       |
+| /dnd           | Mark yourself as do not disturb   |                                   |       |
 | /friend        | List all friends                  |                                   |       |
 | /friend accept | Accept a friend request           | full discord name, i.e. name#XXXX |       |
 | /friend add    | Add a friend                      | full discord name, i.e. name#XXXX |       |
 | /friend list   | List all friends                  |                                   |       |
 | /friend remove | Remove a friend                   | full discord name, i.e. name#XXXX |       |
 | /friends       | Alias for "/friend"               |                                   |       |
+| /idle          | Mark yourself as idle             |                                   |       |
+| /invisible     | Mark yourself as invisible        |                                   |       |
 | /join          | Join a guild channel              | "guild name" "channel name"       |       |
 | /login         | Alias for /connect                |                                   |       |
 | /logout        | Log current user out              |                                   |       |
 | /markread      | Alias for /ack                    |                                   | WIP   |
 | /msg           | Private message a friend          | full discord name, i.e. name#XXXX |       |
+| /online        | Mark yourself as online           |                                   |       |
 | /post          | Post a message to current channel | full message to post              |       |
 | /quit          | Exit, and quit                    |                                   |       |
 | /wc            | Alias for /close                  |                                   |       |

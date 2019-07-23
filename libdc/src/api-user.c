@@ -19,6 +19,40 @@
 #include <dc/api.h>
 #include "internal.h"
 
+bool dc_api_set_user_status(dc_api_t api, dc_account_t login,
+                            char const *status)
+{
+    char const *url = "users/@me/settings";
+    json_t *reply = NULL, *data = NULL;
+    bool ret = false;
+
+    return_if_true(api == NULL || login == NULL || status == NULL, false);
+
+    if (strcmp(status, DC_API_USER_STATUS_ONLINE) != 0 &&
+        strcmp(status, DC_API_USER_STATUS_IDLE) != 0 &&
+        strcmp(status, DC_API_USER_STATUS_DND) != 0 &&
+        strcmp(status, DC_API_USER_STATUS_INVISIBLE) != 0) {
+        return false;
+    }
+
+    data = json_object();
+    goto_if_true(data == NULL, cleanup);
+
+    json_object_set_new(data, "status", json_string(status));
+
+    reply = dc_api_call_sync(api, "PATCH", TOKEN(login), url, data);
+    goto_if_true(reply != NULL, cleanup);
+
+    ret = true;
+
+cleanup:
+
+    json_decref(reply);
+    json_decref(data);
+
+    return ret;
+}
+
 bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
                          dc_account_t user)
 {
@@ -36,7 +70,7 @@ bool dc_api_get_userinfo(dc_api_t api, dc_account_t login,
         asprintf(&url, "users/%s", dc_account_id(user));
     }
 
-    reply = dc_api_call_sync(api, "GET", dc_account_token(login), url, NULL);
+    reply = dc_api_call_sync(api, "GET", TOKEN(login), url, NULL);
     goto_if_true(reply == NULL, cleanup);
 
     val = json_object_get(reply, "username");
@@ -74,7 +108,7 @@ bool dc_api_get_userguilds(dc_api_t api, dc_account_t login, GPtrArray **out)
     return_if_true(api == NULL, false);
     return_if_true(login == NULL, false);
 
-    reply = dc_api_call_sync(api, "GET", dc_account_token(login), url, NULL);
+    reply = dc_api_call_sync(api, "GET", TOKEN(login), url, NULL);
     goto_if_true(reply == NULL, cleanup);
 
     goto_if_true(!json_is_array(reply), cleanup);
