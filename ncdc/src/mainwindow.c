@@ -483,7 +483,10 @@ static void ncdc_mainwindow_handle_events(ncdc_mainwindow_t n)
         return;
     }
 
+    dc_channel_t c = NULL;
     dc_event_t e = NULL;
+    dc_message_t m = NULL;
+    char const *id = NULL;
 
     e = dc_session_pop_event(current_session);
     if (e == NULL) {
@@ -497,9 +500,28 @@ static void ncdc_mainwindow_handle_events(ncdc_mainwindow_t n)
         ncdc_mainwindow_update_guilds(n);
     } break;
 
+    case DC_EVENT_TYPE_MESSAGE_CREATE:
+    {
+        m = dc_message_from_json(dc_event_payload(e));
+        id = dc_message_channel_id(m);
+        goto_if_true(m == NULL || id == NULL, cleanup);
+
+        c = dc_session_channel_by_id(current_session, id);
+        goto_if_true(c == NULL, cleanup);
+
+        /* TODO: handle unmuted channels here
+         */
+        if (dc_channel_is_dm(c)) {
+            ncdc_mainwindow_switch_or_add(n, c);
+        }
+    } break;
+
     default: break;
     }
 
+cleanup:
+
+    dc_unref(m);
     dc_unref(e);
 }
 

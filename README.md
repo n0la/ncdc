@@ -130,7 +130,6 @@ are a few that would be nice to have:
 * auto completion
 * man pages
 * notification handling if guilds are edited
-* notification handling if friends send you a message
 * /markread support
 * handling for markdown, i.e. bold, italics, colours etc.
 * voice chat support
