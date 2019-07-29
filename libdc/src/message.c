@@ -153,6 +153,12 @@ static void dc_message_parse_timestamp(dc_message_t m)
     m->ts = timegm(&t);
 }
 
+time_t dc_message_unix_timestamp(dc_message_t m)
+{
+    return_if_true(m == NULL, 0);
+    return m->ts;
+}
+
 int dc_message_compare(dc_message_t *a, dc_message_t *b)
 {
     return_if_true(a == NULL || *a == NULL ||

@@ -1,9 +1,9 @@
 * General
 ** TODO move key handling away from the thread the event_loop thread
-* Channels [3/4]
+* Channels [4/4]
 ** DONE Automatically open window for 1:1 and 1:N
 ** DONE send v6/api/channels/$ID/ack for "I read that shit"
-** TODO add timestamps from messages
+** DONE add timestamps from messages
 ** DONE add message sending
 * Guilds [2/3]
 ** DONE Guild support code

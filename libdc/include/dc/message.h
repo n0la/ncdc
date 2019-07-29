@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <jansson.h>
+#include <time.h>
 
 #include <dc/account.h>
 
@@ -37,6 +38,7 @@ char const *dc_message_channel_id(dc_message_t m);
 char const *dc_message_timestamp(dc_message_t m);
 char const *dc_message_content(dc_message_t m);
 dc_account_t dc_message_author(dc_message_t m);
+time_t dc_message_unix_timestamp(dc_message_t m);
 
 int dc_message_compare(dc_message_t *a, dc_message_t *b);
 

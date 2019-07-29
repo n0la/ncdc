@@ -183,10 +183,13 @@ ncdc_textview_render_par(ncdc_textview_t v, WINDOW *win, int lines, int cols)
 static wchar_t *ncdc_textview_format(dc_message_t m)
 {
     wchar_t *c = NULL, *author = NULL, *message = NULL;
+    wchar_t timestamp[100] = {0};
     size_t clen = 0;
     FILE *f = open_wmemstream(&c, &clen);
     wchar_t *ret = NULL;
     dc_account_t a = dc_message_author(m);
+    struct tm *tm = NULL;
+    time_t uts = 0;
 
     return_if_true(f == NULL, NULL);
 
@@ -196,7 +199,11 @@ static wchar_t *ncdc_textview_format(dc_message_t m)
     message = s_convert(dc_message_content(m));
     goto_if_true(message == NULL, cleanup);
 
-    fwprintf(f, L"< %ls> %ls", author, message);
+    uts = dc_message_unix_timestamp(m);
+    tm = gmtime(&uts);
+    wcsftime(timestamp, 99, L"%F/%H:%M", tm);
+
+    fwprintf(f, L"%ls < %ls> %ls", timestamp, author, message);
 
     fclose(f);
     f = NULL;
