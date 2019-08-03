@@ -19,6 +19,7 @@
 #include <ncdc/input.h>
 #include <ncdc/ncdc.h>
 #include <ncdc/keycodes.h>
+#include <ncdc/cmds.h>
 
 struct ncdc_input_
 {
@@ -30,6 +31,8 @@ struct ncdc_input_
 
     ncdc_input_callback_t callback;
     void *callback_arg;
+
+    ncdc_autocomplete_t autocomplete;
 };
 
 static void ncdc_input_enter(ncdc_input_t p);
@@ -37,6 +40,8 @@ static void ncdc_input_enter(ncdc_input_t p);
 static void ncdc_input_free(ncdc_input_t p)
 {
     g_array_unref(p->buffer);
+
+    dc_unref(p->autocomplete);
 
     free(p);
 }
@@ -53,7 +58,58 @@ ncdc_input_t ncdc_input_new(void)
 
     p->keys = keys_emacs;
 
+    p->autocomplete = ncdc_autocomplete_new();
+
     return p;
+}
+
+static void ncdc_input_autocomplete(ncdc_input_t i)
+{
+    bool complete = false;
+    bool ret = false;
+    wchar_t const *completed = NULL;
+    int newpos = 0;
+
+    ret = ncdc_autocomplete_prepare(i->autocomplete,
+                                    (wchar_t const*)i->buffer->data, -1,
+                                    i->cursor
+        );
+    if (!ret) {
+        return;
+    }
+
+    if (ncdc_autocomplete_word_index(i->autocomplete) == 0) {
+        /* check if we have a command, and if so, autocomplete for
+         * commands.
+         */
+        if (g_array_index(i->buffer, wchar_t, 0) == L'/') {
+            ncdc_autocomplete_completions(i->autocomplete,
+                                          ncdc_cmd_names(),
+                                          ncdc_cmd_names_size()
+                );
+            complete = true;
+        }
+    }
+
+    if (complete) {
+        ret = ncdc_autocomplete_complete(i->autocomplete, &newpos);
+        if (ret) {
+            completed = ncdc_autocomplete_completed(i->autocomplete);
+            /* exchange our buffer, for the autocompleted buffer
+             */
+            g_array_remove_range(i->buffer, 0, i->buffer->len);
+            g_array_append_vals(i->buffer, completed, wcslen(completed));
+            i->cursor = newpos;
+
+            if (i->cursor >= i->buffer->len) {
+                wchar_t space = L' ';
+                g_array_append_val(i->buffer, space);
+                ++i->cursor;
+            }
+        }
+    } else {
+        ncdc_autocomplete_reset(i->autocomplete);
+    }
 }
 
 void ncdc_input_feed(ncdc_input_t input, wchar_t const *c, size_t sz)
@@ -63,11 +119,16 @@ void ncdc_input_feed(ncdc_input_t input, wchar_t const *c, size_t sz)
 
     if (c[0] == '\r') {
         ncdc_input_enter(input);
+        ncdc_autocomplete_reset(input->autocomplete);
+    } else if (c[0] == '\t') {
+        ncdc_input_autocomplete(input);
     } else if ((bind = ncdc_find_keybinding(input->keys, c, sz)) != NULL) {
         bind->handler(input);
+        ncdc_autocomplete_reset(input->autocomplete);
     } else if (iswprint(c[0])) {
         g_array_insert_vals(input->buffer, input->cursor, &c[0], 1);
         input->cursor += wcswidth(&c[0], 1);
+        ncdc_autocomplete_reset(input->autocomplete);
     }
 }
 

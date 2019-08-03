@@ -7,6 +7,7 @@ PKG_CHECK_MODULES(CONFUSE REQUIRED libconfuse)
 SET(TARGET "ncdc")
 
 SET(SOURCES
+  "include/ncdc/autocomplete.h"
   "include/ncdc/cmds.h"
   "include/ncdc/config.h"
   "include/ncdc/input.h"
@@ -15,6 +16,7 @@ SET(SOURCES
   "include/ncdc/textview.h"
   "include/ncdc/treeview.h"
   "src/ack.c"
+  "src/autocomplete.c"
   "src/cmds.c"
   "src/config.c"
   "src/close.c"

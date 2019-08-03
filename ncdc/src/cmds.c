@@ -44,6 +44,9 @@ static pthread_t thr;
 static pthread_mutex_t mtx;
 static pthread_cond_t cnd;
 
+static wchar_t **names;
+static size_t names_size;
+
 typedef struct {
     ncdc_commands_t *cmd;
     wchar_t *f;
@@ -93,6 +96,8 @@ bool ncdc_dispatch_init(void)
 {
     return_if_true(queue != NULL, true);
 
+    size_t i = 0;
+
     queue = g_queue_new();
     return_if_true(queue == NULL, false);
 
@@ -100,6 +105,16 @@ bool ncdc_dispatch_init(void)
     pthread_cond_init(&cnd, NULL);
 
     pthread_create(&thr, NULL, async_dispatcher, NULL);
+
+    /* build a table of names for the autocompletion, note that
+     * the cmds array is already one size too large (to hold a NULL)
+     */
+    names_size = (sizeof(cmds) / sizeof(ncdc_commands_t)) - 1;
+    names = calloc(names_size + 1, sizeof(wchar_t*));
+
+    for (i = 0; cmds[i].name != NULL; i++) {
+        names[i] = wcsdup(cmds[i].name);
+    }
 
     return true;
 }
@@ -121,6 +136,10 @@ bool ncdc_dispatch_deinit(void)
     g_queue_free(queue);
     queue = NULL;
 
+    w_strfreev(names);
+    names = NULL;
+    names_size = 0;
+
     return true;
 }
 
@@ -135,6 +154,16 @@ ncdc_commands_t *ncdc_find_cmd(ncdc_commands_t *cmds, wchar_t const *name)
     }
 
     return NULL;
+}
+
+wchar_t **ncdc_cmd_names(void)
+{
+    return names;
+}
+
+size_t ncdc_cmd_names_size(void)
+{
+    return names_size;
 }
 
 bool ncdc_dispatch(ncdc_mainwindow_t n, wchar_t const *s)

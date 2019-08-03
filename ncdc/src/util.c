@@ -113,6 +113,29 @@ void w_strfreev(wchar_t **s)
     free(s);
 }
 
+wchar_t **w_strdupv(wchar_t **s, ssize_t sz)
+{
+    wchar_t **copy = NULL;
+    size_t i = 0;
+
+    if (sz < 0) {
+        sz = w_strlenv(s);
+    }
+
+    copy = calloc(sz + 1, sizeof(wchar_t*));
+    return_if_true(copy == NULL, NULL);
+
+    for (i = 0; i < sz; i++) {
+        copy[i] = wcsdup(s[i]);
+        if (copy[i] == NULL) {
+            w_strfreev(copy);
+            return NULL;
+        }
+    }
+
+    return copy;
+}
+
 wchar_t **w_tokenise(wchar_t const *str)
 {
     wchar_t const *p = NULL, *start_of_word = NULL;

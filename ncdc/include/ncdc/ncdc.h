@@ -89,9 +89,12 @@ char *read_char(FILE *stream);
 int aswprintf(wchar_t **buffer, wchar_t const *fmt, ...);
 char *w_convert(wchar_t const *w);
 wchar_t* wcsndup(const wchar_t* string, size_t maxlen);
+
 size_t w_strlenv(wchar_t **s);
 void w_strfreev(wchar_t **s);
+wchar_t **w_strdupv(wchar_t **s, ssize_t sz);
 wchar_t *w_joinv(wchar_t const **v, size_t len);
+
 wchar_t **w_tokenise(wchar_t const *w);
 wchar_t *w_next_tok(wchar_t const *w);
 wchar_t const *w_next_word(wchar_t const *w, ssize_t len);

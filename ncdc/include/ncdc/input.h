@@ -21,6 +21,7 @@
 
 #include <ncdc/ncdc.h>
 #include <ncdc/keycodes.h>
+#include <ncdc/autocomplete.h>
 
 struct ncdc_input_;
 typedef struct ncdc_input_ *ncdc_input_t;
